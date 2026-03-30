@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="fragments :: head (titulo='Acerca de')"></head>
+<head th:replace="fragments :: head (titulo='About')"></head>
 <body>
+
+<th:block th:if="${usuarioId != null}">
+    <div th:replace="fragments :: userNavbar(${usuarioId}, ${usuarioNombre})"></div>
+</th:block>
+
+<th:block th:if="${usuarioId == null}">
+    <div th:replace="fragments :: guestNavbar"></div>
+</th:block>
+
 <div class="container-fluid">
     <div class="container-fluid">
         <h1>ToDoList</h1>
@@ -12,6 +21,7 @@
         </ul>
     </div>
 </div>
+
 <div th:replace="fragments::javascript"></div>
 </body>
 </html>
