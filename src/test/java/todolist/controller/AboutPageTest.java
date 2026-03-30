@@ -22,4 +22,17 @@ public class AboutPageTest {
         this.mockMvc.perform(get("/about"))
                 .andExpect(content().string(containsString("ToDoList")));
     }
+
+    @Test
+    public void aboutPageAsGuestShowsLoginAndRegister() throws Exception {
+        this.mockMvc.perform(get("/about"))
+                .andExpect(content().string(containsString("Login")))
+                .andExpect(content().string(containsString("Register")));
+    }
+
+    @Test
+    public void aboutPageShowsToDoListTitle() throws Exception {
+        this.mockMvc.perform(get("/about"))
+                .andExpect(content().string(containsString("ToDoList")));
+    }
 }
