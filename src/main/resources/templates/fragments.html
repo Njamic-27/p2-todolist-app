@@ -7,6 +7,64 @@
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
 </head>
 
+<nav th:fragment="guestNavbar" class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <a class="navbar-brand" th:href="@{/about}">ToDoList</a>
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#guestNavbarContent"
+            aria-controls="guestNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="guestNavbarContent">
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/login}">Login</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/registro}">Register</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<nav th:fragment="userNavbar(usuarioId, usuarioNombre)" class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <a class="navbar-brand" th:href="@{/about}">ToDoList</a>
+
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#userNavbarContent"
+            aria-controls="userNavbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="userNavbarContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/usuarios/{id}/tareas(id=${usuarioId})}">Tasks</a>
+            </li>
+        </ul>
+
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle"
+                   href="#"
+                   id="navbarUserDropdown"
+                   role="button"
+                   data-toggle="dropdown"
+                   aria-haspopup="true"
+                   aria-expanded="false"
+                   th:text="${usuarioNombre}">
+                    Username
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarUserDropdown">
+                    <a class="dropdown-item" href="#">Account</a>
+                    <a class="dropdown-item" th:href="@{/logout}">
+                        Log out <span th:text="${usuarioNombre}"></span>
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </div>
+</nav>
+
 <div th:fragment="javascript">
     <script th:src="@{/js/jquery.min.js}"></script>
     <script th:src="@{/js/popper.min.js}"></script>
