@@ -153,4 +153,24 @@ public class UsuarioServiceTest {
         assertThat(usuario.getEmail()).isEqualTo("richard@umh.es");
         assertThat(usuario.getNombre()).isEqualTo("Richard Stallman");
     }
+
+    @Test
+    public void servicioConsultaListaUsuariosDevuelveUsuariosRegistrados() {
+        // GIVEN
+        addUsuarioBD();
+
+        UsuarioData usuario2 = new UsuarioData();
+        usuario2.setEmail("ada@umh.es");
+        usuario2.setNombre("Ada Lovelace");
+        usuario2.setPassword("5678");
+        usuarioService.registrar(usuario2);
+
+        // WHEN
+        java.util.List<UsuarioData> usuarios = usuarioService.findAllUsuarios();
+
+        // THEN
+        assertThat(usuarios).hasSize(2);
+        assertThat(usuarios).extracting(UsuarioData::getEmail)
+                .contains("richard@umh.es", "ada@umh.es");
+    }
 }
