@@ -1,205 +1,141 @@
 # To Do List App
 
-A Task Management application built with Spring Boot and Thymeleaf templates. This application allows users to create, manage, and organize their daily tasks with a clean and intuitive user interface.
+ToDoList app using Spring Boot, Thymeleaf templates, Spring Data JPA, and H2.
+
+The About page in the app currently shows:
+- Version `1.0.1`
+- Release date `24/03/2026`
 
 ## Table of Contents
 
 - [Requirements](#requirements)
-- [Installation & Execution](#installation--ejecución)
-- [Running the Application](#running-the-application)
-- [Features](#features)
-- [Project Planning](#project-planning)
+- [Ejecucion](#ejecucion)
+- [Main Routes](#main-routes)
+- [Functionalities](#functionalities)
 - [Testing](#testing)
+- [Project Planning](#project-planning)
 - [Project Structure](#project-structure)
-
----
 
 ## Requirements
 
 You need to install on your system:
 
 - Java 8 SDK or higher
-- Maven 3.6+ (for building the project)
+- Maven 3.6+
 
----
+## Ejecucion
 
-## Installation & Ejecución
+Run the app with Spring Boot:
 
-### Using Maven Plugin
-
-You can run the app using the goal `run` from Maven's _plugin_ on Spring Boot:
-
-```bash
-$ ./mvn spring-boot:run 
-```   
-
-### Creating and Running a JAR File
-
-Alternatively, you can create a `jar` file and run it:
-
-```bash
-$ ./mvn package
-$ java -jar target/todolist-nikola-1.0.1-SNAPSHOT.jar 
+```powershell
+mvn spring-boot:run
 ```
 
----
+Build and run the generated JAR:
 
-## Running the Application
+```powershell
+mvn clean package
+java -jar target/todolist-nikola-1.0.1-SNAPSHOT.jar
+```
 
-Once the app is running, you can open your favorite browser and navigate to:
+When the app is running, open:
+- [http://localhost:8080/login](http://localhost:8080/login)
 
-- **Login Page**: [http://localhost:8080/login](http://localhost:8080/login)
+## Main Routes
 
-From here, you can:
-- Register a new account
-- Log in with existing credentials
-- Access your task management dashboard
+- `/` -> redirects to `/login`
+- `/login` -> login form
+- `/registro` -> registration form
+- `/logout` -> logout and redirect to login
+- `/about` -> about page with dynamic navbar
+- `/usuarios/{id}/tareas` -> task list for one user
+- `/usuarios/{id}/tareas/nueva` -> create task form
+- `/tareas/{id}/editar` -> edit task form
+- `/tareas/{id}` (`DELETE`) -> delete task
+- `/registered` -> registered users list
+- `/registered/{id}` -> user description page
 
----
+## Functionalities
 
-## Features
+### Authentication and session
 
-### Current Features (Version 1.0.0)
+- Login with email and password (`LOGIN_OK`, `USER_NOT_FOUND`, `ERROR_PASSWORD` flows are implemented and tested)
+- New user registration with validation
+- Duplicate email protection during registration
+- Session-based user tracking through `ManagerUserSession`
 
-- **User Authentication**: Secure login and registration system
-- **Task Management**: Create, edit, delete, and view personal tasks
-- **Task Status Tracking**: Mark tasks as complete or pending
-- **User Dashboard**: View all your tasks in one place
-- **About Page**: Information about the application
+### Task management
 
-### In Progress: Version 1.1.0
+- Create, list, edit, and delete tasks
+- Each task belongs to a user
+- Ownership check before task operations (user in session must match route/task owner)
+- HTTP error behavior:
+  - `401 Unauthorized` for non-authorized user access (`UsuarioNoLogeadoException`)
+  - `404 Not Found` for missing tasks (`TareaNotFoundException`)
 
-#### Menu Bar Feature
+### Navigation and pages
 
-A common navigation bar (Bootstrap Navbar) has been added to the application for improved navigation and user experience.
-
-##### Functionality
-
-- The navbar is displayed on all pages except:
-    - Login page
-    - Registration page
-
-- The navbar contains:
-    - **ToDoList** → link to the About page
-    - **Tasks** → link to the user's task list
-    - **Username (dropdown)**:
-        - Account (future functionality)
-        - Log out `<username>`
-
-##### Dynamic Behaviour
-
-- On the **About page**:
-    - If the user is **logged in** → full navbar is displayed
-    - If the user is **not logged in** → navbar shows:
-        - Login
-        - Register
-
-- On protected pages (tasks, create/edit task):
-    - The full navbar with user information is always displayed
-
-#### User List Feature
-
-A new page has been added to display the list of registered users in the system.
-
-##### Functionality
-
-- The page is available at: `/registered`
-- It displays the following information for each registered user:
-    - User identifier
-    - Email address
-
----
+- Shared navbar fragments for guests and logged-in users (`fragments.html`)
+- Guest navbar on About page: `Login`, `Register`
+- User navbar on protected pages: `ToDoList`, `Tasks`, user dropdown, `Log out`
+- Registered users list page with links to each user description
 
 ## Testing
 
-Comprehensive tests have been implemented to ensure code quality and correct behavior across all features.
+The project includes controller/web, service, and repository tests.
 
-### Controller / Web Tests
+Verified with:
 
-- **About Page Tests** (`AboutPageTest`):
-    - Verifies that guest users see:
-        - Login link
-        - Register link
-    - Verifies that authenticated users see the full navigation bar
-    - Verifies that the page content is rendered correctly
-
-- **Task Web Tests** (`TareaWebTest`):
-    - Verifies task creation, editing, and deletion
-    - Ensures proper user authentication on protected routes
-    - Tests task list display and filtering
-
-- **User Web Tests** (`UsuarioWebTest`):
-    - Tests user registration and login flows
-    - Verifies authentication and authorization
-    - Tests the registered users list page (`/registered`)
-
-### Service Layer Tests
-
-- **Task Service Tests** (`TareaServiceTest`):
-    - Service-layer retrieval of all registered tasks
-    - Task creation and persistence
-    - Task update and deletion operations
-
-- **User Service Tests** (`UsuarioServiceTest`):
-    - Service-layer retrieval of all registered users
-    - User registration and validation
-    - Password handling and user account management
-
-### Repository Tests
-
-- **Task Repository Tests** (`TareaTest`):
-    - Database operations for tasks
-    - Query functionality and data persistence
-
-- **User Repository Tests** (`UsuarioTest`):
-    - Database operations for users
-    - Query functionality and data persistence
-
-All tests can be run using:
-
-```bash
-$ ./mvn test
+```powershell
+mvn test -q
 ```
 
----
+Current surefire summary:
+
+- `AboutPageTest`: 3 tests
+- `TareaWebTest`: 5 tests
+- `UsuarioWebTest`: 6 tests
+- `TareaServiceTest`: 5 tests
+- `UsuarioServiceTest`: 8 tests
+- `TareaTest`: 9 tests
+- `UsuarioTest`: 6 tests
+
+Total: **42 tests** (`Failures: 0, Errors: 0, Skipped: 0`).
+
+### Test coverage highlights
+
+- About page rendering and guest navbar visibility
+- Login success/failure cases
+- Registered users pages (`/registered`, `/registered/{id}`)
+- Task web flows: list, create, edit, delete
+- User and task service logic, including validation exceptions
+- Repository/entity behavior for user/task persistence and relationships
 
 ## Project Planning
 
-Track the development progress and upcoming features on our Trello board:
-
-📋 **[Trello Board - P2 To Do List App](https://trello.com/invite/b/69b8392e314edc5e78153591/ATTIb9faf682c49f33f3b63bc01d06bd8e6865DEB8FB/p2-to-do-list-app)**
-
----
+- [Trello board](https://trello.com/invite/b/69b8392e314edc5e78153591/ATTIb9faf682c49f33f3b63bc01d06bd8e6865DEB8FB/p2-to-do-list-app)
 
 ## Project Structure
 
 ```
 p2-todolist-app/
-├── src/
-│   ├── main/
-│   │   ├── java/todolist/
-│   │   │   ├── Application.java
-│   │   │   ├── authentication/
-│   │   │   ├── config/
-│   │   │   ├── controller/
-│   │   │   ├── dto/
-│   │   │   ├── model/
-│   │   │   ├── repository/
-│   │   │   └── service/
-│   │   └── resources/
-│   │       ├── application.properties
-│   │       ├── messages.properties
-│   │       ├── static/ (CSS, JS)
-│   │       └── templates/ (Thymeleaf HTML templates)
-│   └── test/
-│       ├── java/todolist/
-│       └── resources/
-├── pom.xml
-└── README.md
+  src/
+    main/
+      java/todolist/
+        authentication/
+        config/
+        controller/
+        dto/
+        model/
+        repository/
+        service/
+      resources/
+        static/
+        templates/
+    test/
+      java/todolist/
+      resources/
+  pom.xml
+  README.md
 ```
 
----
-
-## Summary
-
-This To Do List application demonstrates a complete full-stack web development approach using Spring Boot, with proper separation of concerns (MVC architecture), comprehensive testing, and a user-friendly interface. The project is actively being developed with new features such as the enhanced navigation bar and user management features in version 1.1.0.

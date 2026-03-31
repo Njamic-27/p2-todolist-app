@@ -118,4 +118,40 @@ public class UsuarioWebTest {
                 .andExpect(content().string(containsString("richard@umh.es")))
                 .andExpect(content().string(containsString("ada@umh.es")));
     }
+
+    @Test
+    public void paginaDescripcionUsuarioMuestraDatosUsuarioSinPassword() throws Exception {
+        // GIVEN
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setEmail("richard@umh.es");
+        usuario.setNombre("Richard Stallman");
+
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("User description")))
+                .andExpect(content().string(containsString("richard@umh.es")))
+                .andExpect(content().string(containsString("Richard Stallman")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("1234"))));
+    }
+
+    @Test
+    public void paginaUsuariosRegistradosContieneEnlaceADescripcion() throws Exception {
+        // GIVEN
+        UsuarioData usuario1 = new UsuarioData();
+        usuario1.setId(1L);
+        usuario1.setEmail("richard@umh.es");
+
+        when(usuarioService.findAllUsuarios())
+                .thenReturn(java.util.Arrays.asList(usuario1));
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/registered/1")))
+                .andExpect(content().string(containsString("Description")));
+    }
 }

@@ -1,5 +1,6 @@
 package todolist.controller;
 
+import org.springframework.web.bind.annotation.PathVariable;
 import todolist.dto.UsuarioData;
 import todolist.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,5 +21,12 @@ public class UsuarioController {
         List<UsuarioData> usuarios = usuarioService.findAllUsuarios();
         model.addAttribute("usuarios", usuarios);
         return "listaUsuarios";
+    }
+
+    @GetMapping("/registered/{id}")
+    public String registeredUserDescription(@PathVariable Long id, Model model) {
+        UsuarioData usuario = usuarioService.findById(id);
+        model.addAttribute("usuario", usuario);
+        return "descripcionUsuario";
     }
 }
