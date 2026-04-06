@@ -2,9 +2,11 @@
 
 ToDoList app using Spring Boot, Thymeleaf templates, Spring Data JPA, and H2 database.
 
+Project owner: **Nikola Jamic**.
+
 The About page in the app currently shows:
-- Version `1.0.1`
-- Release date `24/03/2026`
+- Version `1.1.0`
+- Release date `06/04/2026`
 
 ## Table of Contents
 
@@ -39,7 +41,7 @@ Build and run the generated JAR:
 
 ```powershell
 mvn clean package
-java -jar target/todolist-nikola-1.0.1-SNAPSHOT.jar
+java -jar target/todolist-nikola-1.1.0-SNAPSHOT.jar
 ```
 
 When the app is running, open:
@@ -138,13 +140,13 @@ mvn test -q
 |------------|-------------|-------------|
 | `AboutPageTest` | 3 | About page rendering and navbar visibility |
 | `TareaWebTest` | 5 | Task creation, listing, editing, deletion |
-| `UsuarioWebTest` | 18 | User authentication, registration, admin functionality, admin-only page protection and block/unblock flows |
+| `UsuarioWebTest` | 20 | User authentication, registration, admin functionality, admin-only page protection, block/unblock flows and navbar checks |
 | `TareaServiceTest` | 5 | Task service business logic |
 | `UsuarioServiceTest` | 20 | User service including admin registration, validation, admin-role checks and block/unblock logic |
 | `TareaTest` (Repository) | 9 | Task persistence and relationships |
 | `UsuarioTest` (Repository) | 8 | User persistence and queries (including blocked state) |
 
-**Total: 68 tests** (`Failures: 0, Errors: 0, Skipped: 0`)
+**Total: 70 tests** (`Failures: 0, Errors: 0, Skipped: 0`)
 
 ### New Admin-Related Tests
 
@@ -366,4 +368,10 @@ p2-todolist-app/
 - Session is stored in memory; users must re-login after app restart
 - Passwords are stored in plain text (for development only; use encryption in production)
 - All Spanish comments and strings are preserved for original language support
+
+## Version 1.1.0 Completion
+
+- Required features are implemented: common menu bar behavior, user listing page, and user description page.
+- Optional features are implemented: admin registration (single admin), admin-only protection for user pages, and admin block/unblock user access.
+- Architecture updates were completed across presentation, controller, service, and repository layers with corresponding tests.
 
