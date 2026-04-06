@@ -35,9 +35,24 @@ public class UsuarioController {
         }
     }
 
+    private void anadirDatosNavbar(Model model) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        model.addAttribute("usuarioId", idUsuarioLogeado);
+
+        UsuarioData usuarioLogeado = usuarioService.findById(idUsuarioLogeado);
+        if (usuarioLogeado != null && usuarioLogeado.getNombre() != null) {
+            model.addAttribute("usuarioNombre", usuarioLogeado.getNombre());
+        } else if (usuarioLogeado != null && usuarioLogeado.getEmail() != null) {
+            model.addAttribute("usuarioNombre", usuarioLogeado.getEmail());
+        } else {
+            model.addAttribute("usuarioNombre", "Usuario");
+        }
+    }
+
     @GetMapping("/registered")
     public String registeredUsers(Model model) {
         comprobarAdministradorLogeado();
+        anadirDatosNavbar(model);
         List<UsuarioData> usuarios = usuarioService.findAllUsuarios();
         model.addAttribute("usuarios", usuarios);
         return "listaUsuarios";
@@ -46,6 +61,7 @@ public class UsuarioController {
     @GetMapping("/registered/{id}")
     public String registeredUserDescription(@PathVariable Long id, Model model) {
         comprobarAdministradorLogeado();
+        anadirDatosNavbar(model);
         UsuarioData usuario = usuarioService.findById(id);
         model.addAttribute("usuario", usuario);
         return "descripcionUsuario";
