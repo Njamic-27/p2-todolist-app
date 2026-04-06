@@ -185,6 +185,39 @@ public class UsuarioWebTest {
     }
 
     @Test
+    public void paginaUsuariosRegistradosMuestraNavbarComun() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+        when(usuarioService.findAllUsuarios()).thenReturn(java.util.Collections.emptyList());
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("ToDoList")))
+                .andExpect(content().string(containsString("Tasks")))
+                .andExpect(content().string(containsString("Log out")));
+    }
+
+    @Test
+    public void paginaDescripcionUsuarioMuestraNavbarComun() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(1L);
+        usuario.setEmail("richard@umh.es");
+        when(usuarioService.findById(1L)).thenReturn(usuario);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("ToDoList")))
+                .andExpect(content().string(containsString("Tasks")))
+                .andExpect(content().string(containsString("Log out")));
+    }
+
+    @Test
     public void servicioLoginAdministradorRedirigeAListaUsuarios() throws Exception {
         // GIVEN
         // Un usuario administrador logea en la aplicación
