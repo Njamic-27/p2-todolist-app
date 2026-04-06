@@ -171,4 +171,37 @@ public class UsuarioTest {
 
         assertThat(usuarioBD.getNombre()).isEqualTo("Richard Stallman");
     }
+
+    @Test
+    @Transactional
+    public void usuarioPorDefectoNoEstaBloqueado() {
+        // GIVEN
+        Usuario usuario = new Usuario("default@umh.es");
+        usuario.setPassword("1234");
+
+        // WHEN
+        usuarioRepository.save(usuario);
+        Usuario usuarioBD = usuarioRepository.findById(usuario.getId()).orElse(null);
+
+        // THEN
+        assertThat(usuarioBD).isNotNull();
+        assertThat(usuarioBD.getIsBlocked()).isFalse();
+    }
+
+    @Test
+    @Transactional
+    public void buscarUsuarioBloqueado() {
+        // GIVEN
+        Usuario usuario = new Usuario("blocked@umh.es");
+        usuario.setPassword("1234");
+        usuario.setIsBlocked(true);
+        usuarioRepository.save(usuario);
+
+        // WHEN
+        Usuario usuarioBloqueado = usuarioRepository.findByIsBlockedTrue().orElse(null);
+
+        // THEN
+        assertThat(usuarioBloqueado).isNotNull();
+        assertThat(usuarioBloqueado.getEmail()).isEqualTo("blocked@umh.es");
+    }
 }

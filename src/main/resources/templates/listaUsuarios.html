@@ -13,11 +13,15 @@
 
   <div class="row mt-3">
     <div class="col">
+      <div class="alert alert-success" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+      <div class="alert alert-danger" th:if="${error != null}" th:text="${error}"></div>
+
       <table class="table table-striped">
         <thead>
         <tr>
           <th>Id</th>
           <th>Email</th>
+          <th>Status</th>
           <th>Action</th>
         </tr>
         </thead>
@@ -26,8 +30,26 @@
           <td th:text="${usuario.id}"></td>
           <td th:text="${usuario.email}"></td>
           <td>
+            <span class="badge badge-success" th:if="${usuario.isBlocked == null || !usuario.isBlocked}">Enabled</span>
+            <span class="badge badge-danger" th:if="${usuario.isBlocked != null && usuario.isBlocked}">Blocked</span>
+          </td>
+          <td>
             <a class="btn btn-primary btn-sm"
                th:href="@{/registered/{id}(id=${usuario.id})}">Description</a>
+
+            <form th:if="${usuario.isAdmin == null || !usuario.isAdmin}" method="post" class="d-inline"
+                  th:action="@{/registered/{id}/block(id=${usuario.id})}">
+              <button type="submit" class="btn btn-danger btn-sm" th:if="${usuario.isBlocked == null || !usuario.isBlocked}">
+                Disable
+              </button>
+            </form>
+
+            <form th:if="${usuario.isAdmin == null || !usuario.isAdmin}" method="post" class="d-inline"
+                  th:action="@{/registered/{id}/unblock(id=${usuario.id})}">
+              <button type="submit" class="btn btn-success btn-sm" th:if="${usuario.isBlocked != null && usuario.isBlocked}">
+                Enable
+              </button>
+            </form>
           </td>
         </tr>
         </tbody>
