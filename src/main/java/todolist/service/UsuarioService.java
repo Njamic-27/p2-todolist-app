@@ -44,6 +44,13 @@ public class UsuarioService {
     // El email no debe estar registrado en la base de datos
     @Transactional
     public UsuarioData registrar(UsuarioData usuario) {
+        return registrar(usuario, false);
+    }
+
+    // Registra un usuario con opción de ser administrador
+    // Solo permite crear un administrador si no existe ninguno aún
+    @Transactional
+    public UsuarioData registrar(UsuarioData usuario, boolean isAdmin) {
         Optional<Usuario> usuarioBD = usuarioRepository.findByEmail(usuario.getEmail());
         if (usuarioBD.isPresent())
             throw new UsuarioServiceException("El usuario " + usuario.getEmail() + " ya está registrado");
@@ -52,7 +59,13 @@ public class UsuarioService {
         else if (usuario.getPassword() == null)
             throw new UsuarioServiceException("El usuario no tiene password");
         else {
+            // Si intenta registrarse como admin, verificar si ya existe un admin
+            if (isAdmin && existsAdmin()) {
+                throw new UsuarioServiceException("Ya existe un administrador en el sistema");
+            }
+            
             Usuario usuarioNuevo = modelMapper.map(usuario, Usuario.class);
+            usuarioNuevo.setIsAdmin(isAdmin);
             usuarioNuevo = usuarioRepository.save(usuarioNuevo);
             return modelMapper.map(usuarioNuevo, UsuarioData.class);
         }
@@ -81,5 +94,21 @@ public class UsuarioService {
         return StreamSupport.stream(usuarioRepository.findAll().spliterator(), false)
                 .map(usuario -> modelMapper.map(usuario, UsuarioData.class))
                 .collect(Collectors.toList());
+    }
+
+    // Verifica si existe un administrador en el sistema
+    @Transactional(readOnly = true)
+    public boolean existsAdmin() {
+        return usuarioRepository.findByIsAdminTrue().isPresent();
+    }
+
+    // Obtiene el usuario administrador del sistema
+    @Transactional(readOnly = true)
+    public UsuarioData getAdmin() {
+        Usuario usuario = usuarioRepository.findByIsAdminTrue().orElse(null);
+        if (usuario == null) return null;
+        else {
+            return modelMapper.map(usuario, UsuarioData.class);
+        }
     }
 }

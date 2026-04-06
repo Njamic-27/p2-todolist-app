@@ -154,4 +154,78 @@ public class UsuarioWebTest {
                 .andExpect(content().string(containsString("/registered/1")))
                 .andExpect(content().string(containsString("Description")));
     }
+
+    @Test
+    public void servicioLoginAdministradorRedirigeAListaUsuarios() throws Exception {
+        // GIVEN
+        // Un usuario administrador logea en la aplicación
+        UsuarioData admin = new UsuarioData();
+        admin.setNombre("Admin User");
+        admin.setId(1L);
+        admin.setIsAdmin(true);
+
+        when(usuarioService.login("admin@umh.es", "adminpass"))
+                .thenReturn(UsuarioService.LoginStatus.LOGIN_OK);
+        when(usuarioService.findByEmail("admin@umh.es"))
+                .thenReturn(admin);
+
+        // WHEN, THEN
+        // La petición POST al login redirige a la lista de usuarios (/registered)
+        // en lugar de a las tareas del usuario
+        this.mockMvc.perform(post("/login")
+                        .param("eMail", "admin@umh.es")
+                        .param("password", "adminpass"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/registered"));
+    }
+
+    @Test
+    public void formularioRegistroMuestraCheckboxAdminCuandoNoExisteAdmin() throws Exception {
+        // GIVEN
+        // No existe administrador en el sistema
+        when(usuarioService.existsAdmin()).thenReturn(false);
+
+        // WHEN, THEN
+        // El formulario de registro contiene el checkbox de administrador
+        this.mockMvc.perform(get("/registro"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("isAdmin")))
+                .andExpect(content().string(containsString("administrador")));
+    }
+
+    @Test
+    public void formularioRegistroNOMuestraCheckboxAdminCuandoExisteAdmin() throws Exception {
+        // GIVEN
+        // Ya existe administrador en el sistema
+        when(usuarioService.existsAdmin()).thenReturn(true);
+
+        // WHEN, THEN
+        // El formulario de registro NO contiene el checkbox de administrador
+        this.mockMvc.perform(get("/registro"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(containsString("administrador"))));
+    }
+
+    @Test
+    public void registroAdministradorFuncionaCorrectamente() throws Exception {
+        // GIVEN
+        // No existe administrador
+        when(usuarioService.existsAdmin()).thenReturn(false);
+
+        // El servicio registra al usuario como admin
+        UsuarioData adminUser = new UsuarioData();
+        adminUser.setId(1L);
+        adminUser.setEmail("newadmin@umh.es");
+        adminUser.setIsAdmin(true);
+
+        // WHEN, THEN
+        // Realizamos un POST al registro con isAdmin=true
+        this.mockMvc.perform(post("/registro")
+                        .param("eMail", "newadmin@umh.es")
+                        .param("password", "adminpass")
+                        .param("nombre", "Admin User")
+                        .param("isAdmin", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
 }
