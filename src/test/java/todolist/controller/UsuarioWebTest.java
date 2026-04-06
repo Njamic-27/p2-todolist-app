@@ -1,5 +1,6 @@
 package todolist.controller;
 
+import todolist.authentication.ManagerUserSession;
 import todolist.dto.UsuarioData;
 import todolist.service.UsuarioService;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ public class UsuarioWebTest {
     // las peticiones a los endpoint.
     @MockBean
     private UsuarioService usuarioService;
+
+    @MockBean
+    private ManagerUserSession managerUserSession;
 
     @Test
     public void servicioLoginUsuarioOK() throws Exception {
@@ -100,6 +104,9 @@ public class UsuarioWebTest {
     @Test
     public void paginaUsuariosRegistradosMuestraListaUsuarios() throws Exception {
         // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
         UsuarioData usuario1 = new UsuarioData();
         usuario1.setId(1L);
         usuario1.setEmail("richard@umh.es");
@@ -122,6 +129,9 @@ public class UsuarioWebTest {
     @Test
     public void paginaDescripcionUsuarioMuestraDatosUsuarioSinPassword() throws Exception {
         // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
         UsuarioData usuario = new UsuarioData();
         usuario.setId(1L);
         usuario.setEmail("richard@umh.es");
@@ -141,6 +151,9 @@ public class UsuarioWebTest {
     @Test
     public void paginaUsuariosRegistradosContieneEnlaceADescripcion() throws Exception {
         // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
         UsuarioData usuario1 = new UsuarioData();
         usuario1.setId(1L);
         usuario1.setEmail("richard@umh.es");
@@ -227,5 +240,51 @@ public class UsuarioWebTest {
                         .param("isAdmin", "true"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    public void paginaUsuariosRegistradosDevuelve401SiUsuarioNoEsAdmin() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(2L);
+        when(usuarioService.esAdministrador(2L)).thenReturn(false);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Permisos insuficientes")));
+    }
+
+    @Test
+    public void paginaDescripcionUsuarioDevuelve401SiUsuarioNoEsAdmin() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(2L);
+        when(usuarioService.esAdministrador(2L)).thenReturn(false);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Permisos insuficientes")));
+    }
+
+    @Test
+    public void paginaUsuariosRegistradosDevuelve401SiNoHayUsuarioLogeado() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Usuario no autorizado")));
+    }
+
+    @Test
+    public void paginaDescripcionUsuarioDevuelve401SiNoHayUsuarioLogeado() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/registered/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Usuario no autorizado")));
     }
 }

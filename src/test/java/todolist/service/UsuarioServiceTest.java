@@ -277,4 +277,40 @@ public class UsuarioServiceTest {
         // getAdmin retorna null
         assertThat(usuarioService.getAdmin()).isNull();
     }
+
+    @Test
+    public void servicioEsAdministradorRetornaTrueParaAdmin() {
+        // GIVEN
+        UsuarioData adminUser = new UsuarioData();
+        adminUser.setEmail("admin@umh.es");
+        adminUser.setPassword("pass123");
+        UsuarioData adminGuardado = usuarioService.registrar(adminUser, true);
+
+        // WHEN
+        boolean esAdmin = usuarioService.esAdministrador(adminGuardado.getId());
+
+        // THEN
+        assertThat(esAdmin).isTrue();
+    }
+
+    @Test
+    public void servicioEsAdministradorRetornaFalseParaUsuarioNormal() {
+        // GIVEN
+        Long usuarioId = addUsuarioBD();
+
+        // WHEN
+        boolean esAdmin = usuarioService.esAdministrador(usuarioId);
+
+        // THEN
+        assertThat(esAdmin).isFalse();
+    }
+
+    @Test
+    public void servicioEsAdministradorRetornaFalseSiUsuarioNoExiste() {
+        // WHEN
+        boolean esAdmin = usuarioService.esAdministrador(999L);
+
+        // THEN
+        assertThat(esAdmin).isFalse();
+    }
 }

@@ -90,6 +90,15 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
+    public boolean esAdministrador(Long usuarioId) {
+        if (usuarioId == null) {
+            return false;
+        }
+        UsuarioData usuario = findById(usuarioId);
+        return usuario != null && Boolean.TRUE.equals(usuario.getIsAdmin());
+    }
+
+    @Transactional(readOnly = true)
     public List<UsuarioData> findAllUsuarios() {
         return StreamSupport.stream(usuarioRepository.findAll().spliterator(), false)
                 .map(usuario -> modelMapper.map(usuario, UsuarioData.class))

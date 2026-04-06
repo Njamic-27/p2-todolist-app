@@ -56,8 +56,8 @@ When the app is running, open:
 - `/usuarios/{id}/tareas/nueva` -> create new task form
 - `/tareas/{id}/editar` -> edit task form
 - `/tareas/{id}` (`DELETE`) -> delete task
-- `/registered` -> registered users list (shows for all users and redirects admin here on login)
-- `/registered/{id}` -> user description page
+- `/registered` -> registered users list (**admin-only**)
+- `/registered/{id}` -> user description page (**admin-only**)
 
 ## Functionalities
 
@@ -98,6 +98,8 @@ When signing up (registering), users have the option to register as an administr
 - Admin users are redirected, after logging in, to the **users list** (`/registered`) instead of their personal task list
 - This allows admins to view and manage all users in the system
 - Admin status is stored in the database (`is_admin` field in `usuarios` table)
+- User listing and user description pages are protected for admin users only
+- If a non-admin user tries to access `/registered` or `/registered/{id}`, the app returns `401 Unauthorized` with reason `Permisos insuficientes`
 
 #### Admin Functionality Details
 
@@ -130,13 +132,13 @@ mvn test -q
 |------------|-------------|-------------|
 | `AboutPageTest` | 3 | About page rendering and navbar visibility |
 | `TareaWebTest` | 5 | Task creation, listing, editing, deletion |
-| `UsuarioWebTest` | 10 | User authentication, registration, and admin functionality |
+| `UsuarioWebTest` | 14 | User authentication, registration, admin functionality and admin-only page protection |
 | `TareaServiceTest` | 5 | Task service business logic |
-| `UsuarioServiceTest` | 13 | User service including admin registration and validation |
+| `UsuarioServiceTest` | 16 | User service including admin registration, validation and admin-role checks |
 | `TareaTest` (Repository) | 9 | Task persistence and relationships |
 | `UsuarioTest` (Repository) | 6 | User persistence and queries |
 
-**Total: 51 tests** (`Failures: 0, Errors: 0, Skipped: 0`)
+**Total: 58 tests** (`Failures: 0, Errors: 0, Skipped: 0`)
 
 ### New Admin-Related Tests
 
@@ -181,12 +183,40 @@ mvn test -q
    - Confirms POST with `isAdmin=true` parameter works correctly
    - Validates redirect to login page after successful registration
 
+5. **`paginaUsuariosRegistradosDevuelve401SiUsuarioNoEsAdmin`**
+   - Verifies non-admin users cannot access `/registered`
+   - Asserts `401 Unauthorized` with reason `Permisos insuficientes`
+
+6. **`paginaDescripcionUsuarioDevuelve401SiUsuarioNoEsAdmin`**
+   - Verifies non-admin users cannot access `/registered/{id}`
+   - Asserts `401 Unauthorized` with reason `Permisos insuficientes`
+
+7. **`paginaUsuariosRegistradosDevuelve401SiNoHayUsuarioLogeado`**
+   - Verifies anonymous access to `/registered` is blocked
+   - Asserts `401 Unauthorized` with reason `Usuario no autorizado`
+
+8. **`paginaDescripcionUsuarioDevuelve401SiNoHayUsuarioLogeado`**
+   - Verifies anonymous access to `/registered/{id}` is blocked
+   - Asserts `401 Unauthorized` with reason `Usuario no autorizado`
+
+#### Service Tests for Protection Support (`UsuarioServiceTest`)
+
+1. **`servicioEsAdministradorRetornaTrueParaAdmin`**
+   - Validates admin-role check returns `true` for administrator users
+
+2. **`servicioEsAdministradorRetornaFalseParaUsuarioNormal`**
+   - Validates admin-role check returns `false` for non-admin users
+
+3. **`servicioEsAdministradorRetornaFalseSiUsuarioNoExiste`**
+   - Validates admin-role check safely returns `false` for unknown user IDs
+
 ### Test Coverage Highlights
 
 - **Authentication**: Login success/failure scenarios
 - **Admin Registration**: Registration with and without existing admin
 - **Admin Redirect**: Admin login redirects to user list
 - **Admin UI**: Checkbox visibility based on admin existence
+- **Admin-only protection**: `/registered` and `/registered/{id}` blocked for non-admin users
 - **Data Validation**: Service layer prevents multiple admins
 - **User Operations**: Task CRUD and permission checks
 - **Exception Handling**: Proper error messages and HTTP status codes
@@ -229,7 +259,7 @@ p2-todolist-app/
         controller/
           LoginController.java      - Login/registration with admin logic
           TareaController.java      - Task operations
-          UsuarioController.java    - User listing/viewing
+          UsuarioController.java    - Admin-only user listing/viewing
           HomeController.java       - Home redirection
         dto/
           LoginData.java            - Login form data
@@ -243,10 +273,12 @@ p2-todolist-app/
           UsuarioRepository.java    - User queries including findByIsAdminTrue()
           TareaRepository.java      - Task queries
         service/
-          UsuarioService.java       - User business logic (admin registration)
+          UsuarioService.java       - User business logic (admin registration and admin-role checks)
           TareaService.java         - Task business logic
           UsuarioServiceException.java - Custom exception
           TareaServiceException.java   - Custom exception
+        controller/exception/
+          PermisosInsuficientesException.java - 401 for non-admin access to protected user pages
       resources/
         templates/
           formLogin.html            - Login form
