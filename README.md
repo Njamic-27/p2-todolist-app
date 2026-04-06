@@ -11,6 +11,7 @@ Developer-facing documentation for the v1.1.0 delivery of the Spring Boot ToDoLi
 - GitHub repository: https://github.com/Njamic-27/p2-todolist-app
 - DockerHub repository: https://hub.docker.com/r/njamic/p2-todolistapp
 - DockerHub tags page: https://hub.docker.com/r/njamic/p2-todolistapp/tags
+- Trello board: https://trello.com/invite/b/69b8392e314edc5e78153591/ATTIb9faf682c49f33f3b63bc01d06bd8e6865DEB8FB/e2-to-do-list-app
 
 ## Docker Images (Published Tags)
 
@@ -22,7 +23,7 @@ The following links point to the real published tags in DockerHub:
 | `1.1.0` | https://hub.docker.com/r/njamic/p2-todolistapp/tags?name=1.1.0 | `docker pull njamic/p2-todolistapp:1.1.0` |
 | `1.0.1` | https://hub.docker.com/r/njamic/p2-todolistapp/tags?name=1.0.1 | `docker pull njamic/p2-todolistapp:1.0.1` |
 
-## Technical Evolution Summary (for the team)
+## Technical Evolution Summary
 
 Version 1.1.0 extends the original task-management baseline with navigation standardization and administrator workflows. The objective was to implement mandatory requirements (shared menu bar, registered users list, and user description page) and optional requirements (single admin registration, admin-only protection for user listing/description, and admin block/unblock operations). Implementation touches all layers: Thymeleaf templates, controllers, service logic, repository queries, and automated tests.
 
