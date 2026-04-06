@@ -188,4 +188,93 @@ public class UsuarioServiceTest {
         assertThat(usuario.getEmail()).isEqualTo("richard@umh.es");
         assertThat(usuario.getNombre()).isEqualTo("Richard Stallman");
     }
+
+    @Test
+    public void servicioRegistroAdministrador() {
+        // WHEN
+        // Registramos un usuario como administrador cuando no existe admin aún
+
+        UsuarioData usuario = new UsuarioData();
+        usuario.setEmail("admin@umh.es");
+        usuario.setPassword("adminpass");
+        usuario.setNombre("Admin User");
+
+        UsuarioData usuarioNuevo = usuarioService.registrar(usuario, true);
+
+        // THEN
+        // el usuario se registra como administrador
+        assertThat(usuarioNuevo.getIsAdmin()).isTrue();
+        
+        // y se puede verificar que existe un admin en el sistema
+        assertThat(usuarioService.existsAdmin()).isTrue();
+        
+        // y podemos obtener al usuario administrador
+        UsuarioData admin = usuarioService.getAdmin();
+        assertThat(admin).isNotNull();
+        assertThat(admin.getEmail()).isEqualTo("admin@umh.es");
+    }
+
+    @Test
+    public void servicioExistenceAdminRetornaFalsoCuandoNoHayAdmin() {
+        // WHEN
+        // No hay ningún administrador registrado
+
+        // THEN
+        // existsAdmin retorna false
+        assertThat(usuarioService.existsAdmin()).isFalse();
+    }
+
+    @Test
+    public void servicioRegistroAdministradorExcepcionSiYaExisteAdmin() {
+        // GIVEN
+        // Ya existe un administrador en el sistema
+        UsuarioData adminUser = new UsuarioData();
+        adminUser.setEmail("admin1@umh.es");
+        adminUser.setPassword("pass123");
+        usuarioService.registrar(adminUser, true);
+
+        // WHEN, THEN
+        // Si intentamos registrar otro usuario como administrador,
+        // se produce una excepción
+        UsuarioData usuario2 = new UsuarioData();
+        usuario2.setEmail("admin2@umh.es");
+        usuario2.setPassword("pass456");
+
+        Assertions.assertThrows(UsuarioServiceException.class, () -> {
+            usuarioService.registrar(usuario2, true);
+        });
+    }
+
+    @Test
+    public void servicioRegistroUsuarioNoAdminFuncionaAunqueExistaAdmin() {
+        // GIVEN
+        // Ya existe un administrador en el sistema
+        UsuarioData adminUser = new UsuarioData();
+        adminUser.setEmail("admin@umh.es");
+        adminUser.setPassword("pass123");
+        usuarioService.registrar(adminUser, true);
+
+        // WHEN
+        // Registramos un usuario normal cuando ya existe admin
+        UsuarioData usuario = new UsuarioData();
+        usuario.setEmail("usuario@umh.es");
+        usuario.setPassword("userpass");
+
+        UsuarioData usuarioNuevo = usuarioService.registrar(usuario, false);
+
+        // THEN
+        // el usuario se registra correctamente como no-admin
+        assertThat(usuarioNuevo.getIsAdmin()).isFalse();
+        assertThat(usuarioNuevo.getEmail()).isEqualTo("usuario@umh.es");
+    }
+
+    @Test
+    public void servicioGetAdminRetornaNull() {
+        // WHEN
+        // No hay ningún administrador registrado
+
+        // THEN
+        // getAdmin retorna null
+        assertThat(usuarioService.getAdmin()).isNull();
+    }
 }

@@ -5,6 +5,7 @@ import todolist.dto.LoginData;
 import todolist.dto.RegistroData;
 import todolist.dto.UsuarioData;
 import todolist.service.UsuarioService;
+import todolist.service.UsuarioServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -47,6 +48,11 @@ public class LoginController {
 
             managerUserSession.logearUsuario(usuario.getId());
 
+            // Si el usuario es admin, redirigir a la lista de usuarios
+            if (usuario.getIsAdmin() != null && usuario.getIsAdmin()) {
+                return "redirect:/registered";
+            }
+
             return "redirect:/usuarios/" + usuario.getId() + "/tareas";
         } else if (loginStatus == UsuarioService.LoginStatus.USER_NOT_FOUND) {
             model.addAttribute("error", "No existe usuario");
@@ -61,6 +67,8 @@ public class LoginController {
     @GetMapping("/registro")
     public String registroForm(Model model) {
         model.addAttribute("registroData", new RegistroData());
+        // Solo mostrar checkbox de admin si no existe admin aún
+        model.addAttribute("canBeAdmin", !usuarioService.existsAdmin());
         return "formRegistro";
     }
 
@@ -68,12 +76,14 @@ public class LoginController {
    public String registroSubmit(@Valid RegistroData registroData, BindingResult result, Model model) {
 
         if (result.hasErrors()) {
+            model.addAttribute("canBeAdmin", !usuarioService.existsAdmin());
             return "formRegistro";
         }
 
         if (usuarioService.findByEmail(registroData.getEmail()) != null) {
             model.addAttribute("registroData", registroData);
             model.addAttribute("error", "El usuario " + registroData.getEmail() + " ya existe");
+            model.addAttribute("canBeAdmin", !usuarioService.existsAdmin());
             return "formRegistro";
         }
 
@@ -83,7 +93,17 @@ public class LoginController {
         usuario.setFechaNacimiento(registroData.getFechaNacimiento());
         usuario.setNombre(registroData.getNombre());
 
-        usuarioService.registrar(usuario);
+        try {
+            // Determinar si se registra como admin
+            boolean isAdmin = registroData.getIsAdmin() != null && registroData.getIsAdmin() && !usuarioService.existsAdmin();
+            usuarioService.registrar(usuario, isAdmin);
+        } catch (UsuarioServiceException e) {
+            model.addAttribute("registroData", registroData);
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("canBeAdmin", !usuarioService.existsAdmin());
+            return "formRegistro";
+        }
+        
         return "redirect:/login";
    }
 

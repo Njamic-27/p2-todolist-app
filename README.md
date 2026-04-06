@@ -1,6 +1,6 @@
 # To Do List App
 
-ToDoList app using Spring Boot, Thymeleaf templates, Spring Data JPA, and H2.
+ToDoList app using Spring Boot, Thymeleaf templates, Spring Data JPA, and H2 database.
 
 The About page in the app currently shows:
 - Version `1.0.1`
@@ -9,9 +9,13 @@ The About page in the app currently shows:
 ## Table of Contents
 
 - [Requirements](#requirements)
-- [Ejecucion](#ejecucion)
+- [Execution](#execution)
 - [Main Routes](#main-routes)
 - [Functionalities](#functionalities)
+  - [Authentication and Session](#authentication-and-session)
+  - [Task Management](#task-management)
+  - [Admin User (Optional)](#admin-user-optional)
+  - [Navigation and Pages](#navigation-and-pages)
 - [Testing](#testing)
 - [Project Planning](#project-planning)
 - [Project Structure](#project-structure)
@@ -23,7 +27,7 @@ You need to install on your system:
 - Java 8 SDK or higher
 - Maven 3.6+
 
-## Ejecucion
+## Execution
 
 Run the app with Spring Boot:
 
@@ -45,71 +49,168 @@ When the app is running, open:
 
 - `/` -> redirects to `/login`
 - `/login` -> login form
-- `/registro` -> registration form
+- `/registro` -> registration form with optional admin checkbox
 - `/logout` -> logout and redirect to login
 - `/about` -> about page with dynamic navbar
-- `/usuarios/{id}/tareas` -> task list for one user
-- `/usuarios/{id}/tareas/nueva` -> create task form
+- `/usuarios/{id}/tareas` -> task list for a user (user route)
+- `/usuarios/{id}/tareas/nueva` -> create new task form
 - `/tareas/{id}/editar` -> edit task form
 - `/tareas/{id}` (`DELETE`) -> delete task
-- `/registered` -> registered users list
+- `/registered` -> registered users list (shows for all users and redirects admin here on login)
 - `/registered/{id}` -> user description page
 
 ## Functionalities
 
-### Authentication and session
+### Authentication and Session
 
-- Login with email and password (`LOGIN_OK`, `USER_NOT_FOUND`, `ERROR_PASSWORD` flows are implemented and tested)
-- New user registration with validation
-- Duplicate email protection during registration
-- Session-based user tracking through `ManagerUserSession`
+- **Login with email and password**: Three possible outcomes:
+  - `LOGIN_OK` - Successful login; user redirected to task list or admin list
+  - `USER_NOT_FOUND` - Email doesn't exist in database
+  - `ERROR_PASSWORD` - Correct email but incorrect password
+  - Regular users are redirected to `/usuarios/{id}/tareas` after successful login
+  - Admin users are redirected to `/registered` (user list) after successful login
+- **New user registration with validation**: Email format validation and required field checks
+- **Duplicate email protection during registration**: Prevents registering with an email already in use
+- **Session-based user tracking**: Managed through `ManagerUserSession` component
 
-### Task management
+### Task Management
 
-- Create, list, edit, and delete tasks
-- Each task belongs to a user
-- Ownership check before task operations (user in session must match route/task owner)
-- HTTP error behavior:
-  - `401 Unauthorized` for non-authorized user access (`UsuarioNoLogeadoException`)
+- **Create, list, edit, and delete tasks**: Full CRUD operations
+- **Task ownership**: Each task belongs to a single user
+- **Ownership validation**: User in session must match task owner for edit/delete operations
+- **HTTP error behavior**:
+  - `401 Unauthorized` for non-authenticated access (`UsuarioNoLogeadoException`)
   - `404 Not Found` for missing tasks (`TareaNotFoundException`)
 
-### Navigation and pages
+### Admin User (Optional)
 
-- Shared navbar fragments for guests and logged-in users (`fragments.html`)
-- Guest navbar on About page: `Login`, `Register`
-- User navbar on protected pages: `ToDoList`, `Tasks`, user dropdown, `Log out`
-- Registered users list page with links to each user description
+When signing up (registering), users have the option to register as an administrator.
+
+#### Admin Registration Rules
+
+- A checkbox labeled "Registrarse como administrador" appears on the registration form
+- **Only if no administrator exists in the system** - The checkbox is hidden if an admin user is already registered
+- **One admin maximum** - The system enforces that only one administrator user can exist
+- If a user attempts to register as admin when one already exists, they receive an error message: "Ya existe un administrador en el sistema"
+
+#### Admin Behavior
+
+- Admin users are redirected, after logging in, to the **users list** (`/registered`) instead of their personal task list
+- This allows admins to view and manage all users in the system
+- Admin status is stored in the database (`is_admin` field in `usuarios` table)
+
+#### Admin Functionality Details
+
+- `UsuarioRepository.findByIsAdminTrue()` - Query to find the admin user
+- `UsuarioService.existsAdmin()` - Check if admin exists
+- `UsuarioService.getAdmin()` - Retrieve the admin user details
+- `UsuarioService.registrar(UsuarioData, boolean)` - Register user with admin flag
+
+### Navigation and Pages
+
+- **Shared navbar fragments** for guests and logged-in users (`fragments.html`)
+- **Guest navbar** on About page: `Login`, `Register`
+- **User navbar** on protected pages: `ToDoList`, `Tasks`, user dropdown with email, `Log out`
+- **Registered users list page** with links to each user's description page
+- **Dynamic admin checkbox** on registration form that appears/disappears based on admin existence
 
 ## Testing
 
-The project includes controller/web, service, and repository tests.
+The project includes comprehensive controller/web, service, and repository tests.
 
-Verified with:
+Run all tests with:
 
 ```powershell
 mvn test -q
 ```
 
-Current surefire summary:
+### Test Summary
 
-- `AboutPageTest`: 3 tests
-- `TareaWebTest`: 5 tests
-- `UsuarioWebTest`: 6 tests
-- `TareaServiceTest`: 5 tests
-- `UsuarioServiceTest`: 8 tests
-- `TareaTest`: 9 tests
-- `UsuarioTest`: 6 tests
+| Test Class | Total Tests | Description |
+|------------|-------------|-------------|
+| `AboutPageTest` | 3 | About page rendering and navbar visibility |
+| `TareaWebTest` | 5 | Task creation, listing, editing, deletion |
+| `UsuarioWebTest` | 10 | User authentication, registration, and admin functionality |
+| `TareaServiceTest` | 5 | Task service business logic |
+| `UsuarioServiceTest` | 13 | User service including admin registration and validation |
+| `TareaTest` (Repository) | 9 | Task persistence and relationships |
+| `UsuarioTest` (Repository) | 6 | User persistence and queries |
 
-Total: **42 tests** (`Failures: 0, Errors: 0, Skipped: 0`).
+**Total: 51 tests** (`Failures: 0, Errors: 0, Skipped: 0`)
 
-### Test coverage highlights
+### New Admin-Related Tests
 
-- About page rendering and guest navbar visibility
-- Login success/failure cases
-- Registered users pages (`/registered`, `/registered/{id}`)
-- Task web flows: list, create, edit, delete
-- User and task service logic, including validation exceptions
-- Repository/entity behavior for user/task persistence and relationships
+#### Service Tests (`UsuarioServiceTest`)
+
+1. **`servicioRegistroAdministrador`**
+   - Tests that a user can register as an administrator when no admin exists
+   - Verifies `isAdmin` flag is set correctly
+   - Validates `existsAdmin()` returns true after registration
+   - Confirms admin can be retrieved via `getAdmin()`
+
+2. **`servicioExistenceAdminRetornaFalsoCuandoNoHayAdmin`**
+   - Ensures `existsAdmin()` returns false when no administrator is registered
+
+3. **`servicioRegistroAdministradorExcepcionSiYaExisteAdmin`**
+   - Validates that registering as admin when one already exists throws `UsuarioServiceException`
+   - Prevents multiple administrators in the system
+
+4. **`servicioRegistroUsuarioNoAdminFuncionaAunqueExistaAdmin`**
+   - Confirms regular users can register normally even when an admin already exists
+   - Regular registration is not affected by existing admin
+
+5. **`servicioGetAdminRetornaNull`**
+   - Tests that `getAdmin()` returns null when no admin is registered
+
+#### Controller Tests (`UsuarioWebTest`)
+
+1. **`servicioLoginAdministradorRedirigeAListaUsuarios`**
+   - Verifies admin users are redirected to `/registered` instead of `/usuarios/{id}/tareas`
+   - Tests that `LoginStatus.LOGIN_OK` with admin user redirects correctly
+
+2. **`formularioRegistroMuestraCheckboxAdminCuandoNoExisteAdmin`**
+   - Tests that registration form displays admin checkbox when no admin exists
+   - Checks for presence of "isAdmin" field and "administrador" label
+
+3. **`formularioRegistroNOMuestraCheckboxAdminCuandoExisteAdmin`**
+   - Validates that admin checkbox is NOT shown when an admin already exists
+   - Verifies "administrador" label is missing from form
+
+4. **`registroAdministradorFuncionaCorrectamente`**
+   - Tests successful admin registration via POST to `/registro`
+   - Confirms POST with `isAdmin=true` parameter works correctly
+   - Validates redirect to login page after successful registration
+
+### Test Coverage Highlights
+
+- **Authentication**: Login success/failure scenarios
+- **Admin Registration**: Registration with and without existing admin
+- **Admin Redirect**: Admin login redirects to user list
+- **Admin UI**: Checkbox visibility based on admin existence
+- **Data Validation**: Service layer prevents multiple admins
+- **User Operations**: Task CRUD and permission checks
+- **Exception Handling**: Proper error messages and HTTP status codes
+
+## Database Schema
+
+### Usuarios Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | BIGINT | PRIMARY KEY | Auto-increment user ID |
+| `email` | VARCHAR(255) | NOT NULL, UNIQUE | Email address |
+| `nombre` | VARCHAR(255) | | Full name |
+| `password` | VARCHAR(255) | | User password |
+| `fecha_nacimiento` | DATE | | Birth date (optional) |
+| `is_admin` | BOOLEAN | DEFAULT FALSE | Admin flag |
+
+### Tareas Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | BIGINT | PRIMARY KEY | Auto-increment task ID |
+| `titulo` | VARCHAR(255) | NOT NULL | Task title |
+| `usuario_id` | BIGINT | FOREIGN KEY | Reference to Usuario |
 
 ## Project Planning
 
@@ -123,19 +224,78 @@ p2-todolist-app/
     main/
       java/todolist/
         authentication/
+          ManagerUserSession.java
         config/
         controller/
+          LoginController.java      - Login/registration with admin logic
+          TareaController.java      - Task operations
+          UsuarioController.java    - User listing/viewing
+          HomeController.java       - Home redirection
         dto/
+          LoginData.java            - Login form data
+          RegistroData.java         - Registration form (with isAdmin field)
+          TareaData.java            - Task transfer object
+          UsuarioData.java          - User transfer object (with isAdmin field)
         model/
+          Usuario.java              - User entity (with isAdmin field)
+          Tarea.java                - Task entity
         repository/
+          UsuarioRepository.java    - User queries including findByIsAdminTrue()
+          TareaRepository.java      - Task queries
         service/
+          UsuarioService.java       - User business logic (admin registration)
+          TareaService.java         - Task business logic
+          UsuarioServiceException.java - Custom exception
+          TareaServiceException.java   - Custom exception
       resources/
-        static/
         templates/
+          formLogin.html            - Login form
+          formRegistro.html         - Registration form with admin checkbox
+          formNuevaTarea.html       - New task form
+          formEditarTarea.html      - Edit task form
+          listaTareas.html          - User tasks list
+          listaUsuarios.html        - All users list
+          descripcionUsuario.html   - User detail page
+          about.html                - About page
+          fragments.html            - Shared components (navbar, etc.)
+        static/
+          css/
+          js/
+        application.properties
     test/
       java/todolist/
+        controller/
+          AboutPageTest.java        - About page tests
+          TareaWebTest.java         - Task web controller tests
+          UsuarioWebTest.java       - User/auth controller tests (with admin tests)
+        service/
+          TareaServiceTest.java     - Task service tests
+          UsuarioServiceTest.java   - User service tests (with admin tests)
+        repository/
+          TareaTest.java            - Task repository tests
+          UsuarioTest.java          - User repository tests
       resources/
+        application.properties
+        clean-db.sql
   pom.xml
   README.md
 ```
+
+## Technologies Used
+
+- **Spring Boot 2.7.14** - Java framework for building applications
+- **Spring Data JPA** - Object-relational mapping and database access
+- **Thymeleaf** - Server-side Java template engine
+- **H2 Database** - In-memory relational database
+- **JUnit 5** - Testing framework
+- **Mockito** - Mocking framework for tests
+- **Maven** - Build automation tool
+- **ModelMapper** - Object mapping library
+
+## Notes
+
+- The application uses H2 in-memory database, so data is lost when the application restarts
+- Session is stored in memory; users must re-login after app restart
+- Passwords are stored in plain text (for development only; use encryption in production)
+- All Spanish comments and strings are preserved for original language support
 
