@@ -58,6 +58,8 @@ When the app is running, open:
 - `/tareas/{id}` (`DELETE`) -> delete task
 - `/registered` -> registered users list (**admin-only**)
 - `/registered/{id}` -> user description page (**admin-only**)
+- `/registered/{id}/block` (`POST`) -> disable user login (**admin-only**)
+- `/registered/{id}/unblock` (`POST`) -> enable user login (**admin-only**)
 
 ## Functionalities
 
@@ -100,6 +102,8 @@ When signing up (registering), users have the option to register as an administr
 - Admin status is stored in the database (`is_admin` field in `usuarios` table)
 - User listing and user description pages are protected for admin users only
 - If a non-admin user tries to access `/registered` or `/registered/{id}`, the app returns `401 Unauthorized` with reason `Permisos insuficientes`
+- Admin can disable/enable each non-admin user from the registered users page
+- Disabled users cannot log in and receive: `Usuario deshabilitado. Contacte con el administrador`
 
 #### Admin Functionality Details
 
@@ -107,6 +111,8 @@ When signing up (registering), users have the option to register as an administr
 - `UsuarioService.existsAdmin()` - Check if admin exists
 - `UsuarioService.getAdmin()` - Retrieve the admin user details
 - `UsuarioService.registrar(UsuarioData, boolean)` - Register user with admin flag
+- `UsuarioService.bloquearUsuario(Long)` - Disable user login access
+- `UsuarioService.desbloquearUsuario(Long)` - Re-enable user login access
 
 ### Navigation and Pages
 
@@ -132,13 +138,13 @@ mvn test -q
 |------------|-------------|-------------|
 | `AboutPageTest` | 3 | About page rendering and navbar visibility |
 | `TareaWebTest` | 5 | Task creation, listing, editing, deletion |
-| `UsuarioWebTest` | 14 | User authentication, registration, admin functionality and admin-only page protection |
+| `UsuarioWebTest` | 18 | User authentication, registration, admin functionality, admin-only page protection and block/unblock flows |
 | `TareaServiceTest` | 5 | Task service business logic |
-| `UsuarioServiceTest` | 16 | User service including admin registration, validation and admin-role checks |
+| `UsuarioServiceTest` | 20 | User service including admin registration, validation, admin-role checks and block/unblock logic |
 | `TareaTest` (Repository) | 9 | Task persistence and relationships |
-| `UsuarioTest` (Repository) | 6 | User persistence and queries |
+| `UsuarioTest` (Repository) | 8 | User persistence and queries (including blocked state) |
 
-**Total: 58 tests** (`Failures: 0, Errors: 0, Skipped: 0`)
+**Total: 68 tests** (`Failures: 0, Errors: 0, Skipped: 0`)
 
 ### New Admin-Related Tests
 
@@ -199,6 +205,22 @@ mvn test -q
    - Verifies anonymous access to `/registered/{id}` is blocked
    - Asserts `401 Unauthorized` with reason `Usuario no autorizado`
 
+9. **`servicioLoginUsuarioBloqueado`**
+   - Verifies blocked users cannot log in
+   - Asserts blocked-login message in login form
+
+10. **`adminPuedeBloquearUsuarioDesdeListado`**
+   - Verifies admin can disable a user through `/registered/{id}/block`
+   - Asserts redirection back to users list
+
+11. **`adminPuedeDesbloquearUsuarioDesdeListado`**
+   - Verifies admin can enable a user through `/registered/{id}/unblock`
+   - Asserts redirection back to users list
+
+12. **`noAdminNoPuedeBloquearUsuario`**
+   - Verifies non-admin users cannot execute block action
+   - Asserts `401 Unauthorized` with reason `Permisos insuficientes`
+
 #### Service Tests for Protection Support (`UsuarioServiceTest`)
 
 1. **`servicioEsAdministradorRetornaTrueParaAdmin`**
@@ -210,6 +232,18 @@ mvn test -q
 3. **`servicioEsAdministradorRetornaFalseSiUsuarioNoExiste`**
    - Validates admin-role check safely returns `false` for unknown user IDs
 
+4. **`servicioLoginUsuarioBloqueadoDevuelveUserBlocked`**
+   - Verifies login returns `USER_BLOCKED` for blocked users
+
+5. **`servicioBloquearYDesbloquearUsuario`**
+   - Verifies blocked flag updates correctly after disable/enable operations
+
+6. **`servicioNoPermiteBloquearAdministrador`**
+   - Verifies the admin account cannot be blocked
+
+7. **`servicioBloquearUsuarioNoExistenteLanzaExcepcion`**
+   - Verifies blocking unknown user IDs throws `UsuarioServiceException`
+
 ### Test Coverage Highlights
 
 - **Authentication**: Login success/failure scenarios
@@ -217,6 +251,7 @@ mvn test -q
 - **Admin Redirect**: Admin login redirects to user list
 - **Admin UI**: Checkbox visibility based on admin existence
 - **Admin-only protection**: `/registered` and `/registered/{id}` blocked for non-admin users
+- **User blocking by admin**: disable/enable actions from users list and blocked login denial
 - **Data Validation**: Service layer prevents multiple admins
 - **User Operations**: Task CRUD and permission checks
 - **Exception Handling**: Proper error messages and HTTP status codes
@@ -233,6 +268,7 @@ mvn test -q
 | `password` | VARCHAR(255) | | User password |
 | `fecha_nacimiento` | DATE | | Birth date (optional) |
 | `is_admin` | BOOLEAN | DEFAULT FALSE | Admin flag |
+| `is_blocked` | BOOLEAN | DEFAULT FALSE | Login enabled/disabled flag |
 
 ### Tareas Table
 
@@ -257,23 +293,23 @@ p2-todolist-app/
           ManagerUserSession.java
         config/
         controller/
-          LoginController.java      - Login/registration with admin logic
+          LoginController.java      - Login/registration with admin logic and blocked-login handling
           TareaController.java      - Task operations
-          UsuarioController.java    - Admin-only user listing/viewing
+          UsuarioController.java    - Admin-only user listing/viewing and block/unblock actions
           HomeController.java       - Home redirection
         dto/
           LoginData.java            - Login form data
           RegistroData.java         - Registration form (with isAdmin field)
           TareaData.java            - Task transfer object
-          UsuarioData.java          - User transfer object (with isAdmin field)
+          UsuarioData.java          - User transfer object (with isAdmin and isBlocked fields)
         model/
-          Usuario.java              - User entity (with isAdmin field)
+          Usuario.java              - User entity (with isAdmin and isBlocked fields)
           Tarea.java                - Task entity
         repository/
-          UsuarioRepository.java    - User queries including findByIsAdminTrue()
+          UsuarioRepository.java    - User queries including admin and blocked lookups
           TareaRepository.java      - Task queries
         service/
-          UsuarioService.java       - User business logic (admin registration and admin-role checks)
+          UsuarioService.java       - User business logic (admin checks plus block/unblock)
           TareaService.java         - Task business logic
           UsuarioServiceException.java - Custom exception
           TareaServiceException.java   - Custom exception
@@ -286,7 +322,7 @@ p2-todolist-app/
           formNuevaTarea.html       - New task form
           formEditarTarea.html      - Edit task form
           listaTareas.html          - User tasks list
-          listaUsuarios.html        - All users list
+          listaUsuarios.html        - All users list with enable/disable buttons
           descripcionUsuario.html   - User detail page
           about.html                - About page
           fragments.html            - Shared components (navbar, etc.)
@@ -299,13 +335,13 @@ p2-todolist-app/
         controller/
           AboutPageTest.java        - About page tests
           TareaWebTest.java         - Task web controller tests
-          UsuarioWebTest.java       - User/auth controller tests (with admin tests)
+          UsuarioWebTest.java       - User/auth controller tests (admin and block/unblock tests)
         service/
           TareaServiceTest.java     - Task service tests
-          UsuarioServiceTest.java   - User service tests (with admin tests)
+          UsuarioServiceTest.java   - User service tests (admin and block/unblock tests)
         repository/
           TareaTest.java            - Task repository tests
-          UsuarioTest.java          - User repository tests
+          UsuarioTest.java          - User repository tests (including blocked state)
       resources/
         application.properties
         clean-db.sql

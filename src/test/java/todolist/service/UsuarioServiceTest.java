@@ -313,4 +313,59 @@ public class UsuarioServiceTest {
         // THEN
         assertThat(esAdmin).isFalse();
     }
+
+    @Test
+    public void servicioLoginUsuarioBloqueadoDevuelveUserBlocked() {
+        // GIVEN
+        Long usuarioId = addUsuarioBD();
+        usuarioService.bloquearUsuario(usuarioId);
+
+        // WHEN
+        UsuarioService.LoginStatus loginStatus = usuarioService.login("richard@umh.es", "1234");
+
+        // THEN
+        assertThat(loginStatus).isEqualTo(UsuarioService.LoginStatus.USER_BLOCKED);
+    }
+
+    @Test
+    public void servicioBloquearYDesbloquearUsuario() {
+        // GIVEN
+        Long usuarioId = addUsuarioBD();
+
+        // WHEN
+        usuarioService.bloquearUsuario(usuarioId);
+        UsuarioData bloqueado = usuarioService.findById(usuarioId);
+
+        // THEN
+        assertThat(bloqueado.getIsBlocked()).isTrue();
+
+        // WHEN
+        usuarioService.desbloquearUsuario(usuarioId);
+        UsuarioData habilitado = usuarioService.findById(usuarioId);
+
+        // THEN
+        assertThat(habilitado.getIsBlocked()).isFalse();
+    }
+
+    @Test
+    public void servicioNoPermiteBloquearAdministrador() {
+        // GIVEN
+        UsuarioData adminUser = new UsuarioData();
+        adminUser.setEmail("admin@umh.es");
+        adminUser.setPassword("pass123");
+        UsuarioData admin = usuarioService.registrar(adminUser, true);
+
+        // WHEN, THEN
+        Assertions.assertThrows(UsuarioServiceException.class, () -> {
+            usuarioService.bloquearUsuario(admin.getId());
+        });
+    }
+
+    @Test
+    public void servicioBloquearUsuarioNoExistenteLanzaExcepcion() {
+        // WHEN, THEN
+        Assertions.assertThrows(UsuarioServiceException.class, () -> {
+            usuarioService.bloquearUsuario(999L);
+        });
+    }
 }

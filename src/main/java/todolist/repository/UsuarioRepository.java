@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     Optional<Usuario> findByEmail(String s);
     Optional<Usuario> findByIsAdminTrue();
+    Optional<Usuario> findByIsBlockedTrue();
 }

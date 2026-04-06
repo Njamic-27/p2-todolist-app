@@ -14,6 +14,7 @@ import java.util.Arrays;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -102,6 +103,20 @@ public class UsuarioWebTest {
     }
 
     @Test
+    public void servicioLoginUsuarioBloqueado() throws Exception {
+        // GIVEN
+        when(usuarioService.login("blocked@umh.es", "1234"))
+                .thenReturn(UsuarioService.LoginStatus.USER_BLOCKED);
+
+        // WHEN, THEN
+        this.mockMvc.perform(post("/login")
+                        .param("eMail", "blocked@umh.es")
+                        .param("password", "1234"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Usuario deshabilitado. Contacte con el administrador")));
+    }
+
+    @Test
     public void paginaUsuariosRegistradosMuestraListaUsuarios() throws Exception {
         // GIVEN
         when(managerUserSession.usuarioLogeado()).thenReturn(10L);
@@ -165,7 +180,8 @@ public class UsuarioWebTest {
         this.mockMvc.perform(get("/registered"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("/registered/1")))
-                .andExpect(content().string(containsString("Description")));
+                .andExpect(content().string(containsString("Description")))
+                .andExpect(content().string(containsString("Disable")));
     }
 
     @Test
@@ -286,5 +302,45 @@ public class UsuarioWebTest {
         this.mockMvc.perform(get("/registered/1"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(status().reason(containsString("Usuario no autorizado")));
+    }
+
+    @Test
+    public void adminPuedeBloquearUsuarioDesdeListado() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        // WHEN, THEN
+        this.mockMvc.perform(post("/registered/2/block"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/registered"));
+
+        verify(usuarioService).bloquearUsuario(2L);
+    }
+
+    @Test
+    public void adminPuedeDesbloquearUsuarioDesdeListado() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(10L);
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        // WHEN, THEN
+        this.mockMvc.perform(post("/registered/2/unblock"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/registered"));
+
+        verify(usuarioService).desbloquearUsuario(2L);
+    }
+
+    @Test
+    public void noAdminNoPuedeBloquearUsuario() throws Exception {
+        // GIVEN
+        when(managerUserSession.usuarioLogeado()).thenReturn(2L);
+        when(usuarioService.esAdministrador(2L)).thenReturn(false);
+
+        // WHEN, THEN
+        this.mockMvc.perform(post("/registered/3/block"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Permisos insuficientes")));
     }
 }
