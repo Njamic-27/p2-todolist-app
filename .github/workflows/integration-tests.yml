@@ -1,0 +1,38 @@
+name: Integration tests
+
+on:
+  push:
+
+jobs:
+  container-job:
+    runs-on: ubuntu-latest
+
+    container:
+      image: openjdk:21-ea-1-jdk
+
+    services:
+      postgres:
+        image: postgres:13
+
+        env:
+          POSTGRES_USER: atsd
+          POSTGRES_PASSWORD: atsd
+          POSTGRES_DB: atsd_test
+
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+
+      - name: Make mvnw executable
+        run: chmod +x ./mvnw
+
+      - name: Run tests with Maven
+        run: ./mvnw test -Dspring.profiles.active=postgres
+        env:
+          POSTGRES_HOST: postgres
