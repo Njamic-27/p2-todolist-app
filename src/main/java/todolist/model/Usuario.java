@@ -24,17 +24,14 @@ public class Usuario implements Serializable {
     @Column(name = "fecha_nacimiento")
     @Temporal(TemporalType.DATE)
     private Date fechaNacimiento;
-    
-    @Column(name = "is_admin", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isAdmin = false;
-
-    @Column(name = "is_blocked", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private Boolean isBlocked = false;
 
     // La relación es lazy por defecto,
     // es necesario acceder a la lista de tareas para que se carguen
     @OneToMany(mappedBy = "usuario")
     Set<Tarea> tareas = new HashSet<>();
+
+    @ManyToMany(mappedBy = "usuarios")
+    Set<Equipo> equipos = new HashSet<>();
 
     // Constructor vacío necesario para JPA/Hibernate.
     // No debe usarse desde la aplicación.
@@ -87,26 +84,14 @@ public class Usuario implements Serializable {
         this.fechaNacimiento = fechaNacimiento;
     }
 
-    public Boolean getIsAdmin() {
-        return isAdmin;
-    }
-
-    public void setIsAdmin(Boolean isAdmin) {
-        this.isAdmin = isAdmin;
-    }
-
-    public Boolean getIsBlocked() {
-        return isBlocked;
-    }
-
-    public void setIsBlocked(Boolean isBlocked) {
-        this.isBlocked = isBlocked;
-    }
-
     // Getters y setters de la relación
 
     public Set<Tarea> getTareas() {
         return tareas;
+    }
+
+    public Set<Equipo> getEquipos() {
+        return equipos;
     }
 
     // Método helper para añadir una tarea a la lista y establecer la relación inversa

@@ -1,6 +1,7 @@
 package todolist.repository;
 
 import todolist.model.Equipo;
+import todolist.model.Usuario;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
@@ -16,6 +17,9 @@ public class EquipoTest {
 
     @Autowired
     private EquipoRepository equipoRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @Test
     public void crearEquipo() {
@@ -49,4 +53,61 @@ public class EquipoTest {
         assertThat(equipoDB).isNotNull();
         assertThat(equipoDB.getNombre()).isEqualTo("Project P1");
     }
+
+    @Test
+    public void comprobarIgualdadEquipos() {
+        // GIVEN
+        // Creamos tres equipos sin id, sólo con el nombre
+        Equipo equipo1 = new Equipo("Project P1");
+        Equipo equipo2 = new Equipo("Project P2");
+        Equipo equipo3 = new Equipo("Project P2");
+
+        // THEN
+        // Comprobamos igualdad basada en el atributo nombre y que el
+        // hashCode es el mismo para dos equipos con igual nombre
+        assertThat(equipo1).isNotEqualTo(equipo2);
+        assertThat(equipo2).isEqualTo(equipo3);
+        assertThat(equipo2.hashCode()).isEqualTo(equipo3.hashCode());
+
+        // WHEN
+        // Añadimos identificadores y comprobamos igualdad por identificadores
+        equipo1.setId(1L);
+        equipo2.setId(1L);
+        equipo3.setId(2L);
+
+        // THEN
+        // Comprobamos igualdad basada en el atributo nombre
+        assertThat(equipo1).isEqualTo(equipo2);
+        assertThat(equipo2).isNotEqualTo(equipo3);
+    }
+
+    @Test
+    @Transactional
+    public void comprobarRelacionBaseDatos() {
+        // GIVEN
+        // Un equipo y un usuario en la BD
+        Equipo equipo = new Equipo("Project 1");
+        equipoRepository.save(equipo);
+
+        Usuario usuario = new Usuario("user@umh");
+        usuarioRepository.save(usuario);
+
+        // WHEN
+        // Añadimos el usuario al equipo
+
+        equipo.addUsuario(usuario);
+
+        // THEN
+        // La relación entre usuario y equipo queda actualizada en BD
+
+        Equipo equipoBD = equipoRepository.findById(equipo.getId()).orElse(null);
+        Usuario usuarioBD = usuarioRepository.findById(usuario.getId()).orElse(null);
+
+        assertThat(equipo.getUsuarios()).hasSize(1);
+        assertThat(equipo.getUsuarios()).contains(usuario);
+        assertThat(usuario.getEquipos()).hasSize(1);
+        assertThat(usuario.getEquipos()).contains(equipo);
+    }
+
+
 }
