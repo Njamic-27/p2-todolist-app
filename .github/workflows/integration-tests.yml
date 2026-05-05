@@ -36,3 +36,6 @@ jobs:
         run: ./mvnw test -Dspring.profiles.active=postgres
         env:
           POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: atsd
+          POSTGRES_PASSWORD: atsd
