@@ -1,6 +1,5 @@
 package todolist.service;
 
-import todolist.controller.exception.EquipoServiceException;
 import todolist.dto.EquipoData;
 import todolist.model.Equipo;
 import todolist.repository.EquipoRepository;
