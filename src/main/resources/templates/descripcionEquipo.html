@@ -20,6 +20,15 @@
             th:action="@{/equipos/{id}/leaveFromDescription(id=${equipo.id})}">
         <button type="submit" class="btn btn-outline-danger btn-sm">Leave team</button>
       </form>
+      <div th:if="${usuarioEsAdmin}" class="mt-2">
+        <form method="post" th:action="@{/equipos/{id}/renombrar(id=${equipo.id})}" class="d-inline mr-2">
+          <input type="text" name="nuevoNombre" th:placeholder="${equipo.nombre}" required="required" class="form-control form-control-sm d-inline-block" style="width:200px;" />
+          <button type="submit" class="btn btn-secondary btn-sm ml-1">Rename</button>
+        </form>
+        <form method="post" th:action="@{/equipos/{id}/eliminar(id=${equipo.id})}" class="d-inline ml-2">
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+      </div>
     </div>
   </div>
 

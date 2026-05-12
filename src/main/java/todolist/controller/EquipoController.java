@@ -80,6 +80,9 @@ public class EquipoController {
         java.util.List<UsuarioData> usuarios = equipoService.usuariosEquipo(id);
         model.addAttribute("usuarios", usuarios);
         model.addAttribute("usuarioEsMiembro", idsEquiposDelUsuario(idUsuarioLogeado).contains(id));
+        // expose whether the logged user is admin so templates can show admin-only controls
+        boolean esAdmin = usuarioService.esAdministrador(idUsuarioLogeado);
+        model.addAttribute("usuarioEsAdmin", esAdmin);
 
         return "descripcionEquipo";
     }

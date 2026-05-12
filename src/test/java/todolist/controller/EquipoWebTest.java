@@ -220,6 +220,24 @@ public class EquipoWebTest {
     }
 
     @Test
+    public void descripcionEquipoMuestraControlesAdminCuandoUsuarioEsAdministrador() throws Exception {
+        whenLoggedUserIsPresent();
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+        when(equipoService.equiposUsuario(10L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/equipos/1/renombrar")))
+                .andExpect(content().string(containsString("/equipos/1/eliminar")));
+    }
+    @Test
     public void crearEquipoPostCreaEquipoYRedirige() throws Exception {
         whenLoggedUserIsPresent();
         EquipoData nuevo = new EquipoData();
