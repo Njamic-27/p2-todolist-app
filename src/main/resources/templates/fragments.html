@@ -38,6 +38,9 @@
     <div class="collapse navbar-collapse" id="userNavbarContent">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item">
+                <a class="nav-link" th:href="@{/equipos}">Teams</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" th:href="@{/usuarios/{id}/tareas(id=${usuarioId})}">Tasks</a>
             </li>
         </ul>
