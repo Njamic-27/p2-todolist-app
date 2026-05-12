@@ -235,4 +235,26 @@ public class EquipoController {
 
         return "redirect:/equipos";
     }
+
+    @PostMapping("/equipos/{id}/eliminar")
+    public String eliminarEquipo(@PathVariable Long id, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        if (!usuarioService.esAdministrador(idUsuarioLogeado)) {
+            flash.addFlashAttribute("error", "Permisos insuficientes");
+            return "redirect:/equipos";
+        }
+
+        try {
+            equipoService.eliminarEquipo(id);
+            flash.addFlashAttribute("mensaje", "Equipo eliminado correctamente");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/equipos";
+    }
 }

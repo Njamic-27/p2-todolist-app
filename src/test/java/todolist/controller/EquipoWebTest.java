@@ -338,6 +338,18 @@ public class EquipoWebTest {
                 .andExpect(redirectedUrl("/equipos"));
     }
 
+    @Test
+    public void eliminarEquipoAdminSuccessfullyDeletesAndRedirects() throws Exception {
+        whenLoggedUserIsPresent();
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        doNothing().when(equipoService).eliminarEquipo(1L);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"));
+    }
+
     private void whenLoggedUserIsPresent() {
         org.mockito.Mockito.when(managerUserSession.usuarioLogeado()).thenReturn(10L);
     }
