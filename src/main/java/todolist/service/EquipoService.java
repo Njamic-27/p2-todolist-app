@@ -99,6 +99,20 @@ public class EquipoService {
     }
 
     @Transactional
+    public void eliminarEquipo(Long idEquipo) {
+        Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
+        if (equipo == null)
+            throw new EquipoServiceException("El equipo no existe");
+
+        for (Usuario usuario : new ArrayList<>(equipo.getUsuarios())) {
+            equipo.removeUsuario(usuario);
+        }
+
+        equipoRepository.save(equipo);
+        equipoRepository.delete(equipo);
+    }
+
+    @Transactional
     public EquipoData recuperarEquipo(Long id) {
         Equipo equipo = equipoRepository.findById(id).orElse(null);
         if (equipo == null)

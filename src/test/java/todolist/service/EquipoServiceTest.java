@@ -44,6 +44,23 @@ public class EquipoServiceTest {
     }
 
     @Test
+    public void eliminarEquipo() {
+        UsuarioData usuarioData = new UsuarioData();
+        usuarioData.setEmail("user@umh");
+        usuarioData.setPassword("1234");
+        UsuarioData usuarioRegistrado = usuarioService.registrar(usuarioData);
+        EquipoData equipoCreado = equipoService.crearEquipo("Proyecto 1");
+        equipoService.añadirUsuarioAEquipo(equipoCreado.getId(), usuarioRegistrado.getId());
+
+        equipoService.eliminarEquipo(equipoCreado.getId());
+
+        assertThatThrownBy(() -> equipoService.recuperarEquipo(equipoCreado.getId()))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El equipo no existe");
+        assertThat(equipoService.equiposUsuario(usuarioRegistrado.getId())).isEmpty();
+    }
+
+    @Test
     public void listadoEquiposOrdenAlfabetico() {
         // GIVEN
         // Dos equipos en la base de datos
