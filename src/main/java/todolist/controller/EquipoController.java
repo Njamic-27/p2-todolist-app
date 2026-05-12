@@ -120,4 +120,37 @@ public class EquipoController {
         }
         return "redirect:/equipos/" + id;
     }
+
+    @GetMapping("/usuarios/{id}/cuenta")
+    public String userAccount(@PathVariable Long id, Model model) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null || !idUsuarioLogeado.equals(id)) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        anadirDatosNavbar(model);
+        UsuarioData usuario = usuarioService.findById(id);
+        model.addAttribute("usuario", usuario);
+
+        List<EquipoData> misEquipos = equipoService.equiposUsuario(id);
+        model.addAttribute("equipos", misEquipos);
+
+        return "cuentaUsuario";
+    }
+
+    @PostMapping("/equipos/{id}/leave")
+    public String leaveTeam(@PathVariable Long id, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        try {
+            equipoService.quitarUsuarioDeEquipo(id, idUsuarioLogeado);
+            flash.addFlashAttribute("mensaje", "Te has salido del equipo correctamente");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/usuarios/" + idUsuarioLogeado + "/cuenta";
+    }
 }

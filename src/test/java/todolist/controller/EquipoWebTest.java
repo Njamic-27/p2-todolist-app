@@ -162,6 +162,50 @@ public class EquipoWebTest {
                 .andExpect(redirectedUrl("/equipos/1"));
     }
 
+    @Test
+    public void userAccountPageMuestaPerfil() throws Exception {
+        whenLoggedUserIsPresent();
+
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(10L);
+        usuario.setNombre("Ana García");
+        usuario.setEmail("ana@umh.es");
+        usuario.setIsAdmin(false);
+        when(usuarioService.findById(10L)).thenReturn(usuario);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+        when(equipoService.equiposUsuario(10L)).thenReturn(java.util.Arrays.asList(equipo));
+
+        this.mockMvc.perform(get("/usuarios/10/cuenta"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("My Account")))
+                .andExpect(content().string(containsString("ana@umh.es")))
+                .andExpect(content().string(containsString("Ana García")))
+                .andExpect(content().string(containsString("Backend")))
+                .andExpect(content().string(containsString("Leave")));
+    }
+
+    @Test
+    public void userAccountPageDevuelve401SiNoEsElUsuarioLogeado() throws Exception {
+        whenLoggedUserIsPresent();
+
+        this.mockMvc.perform(get("/usuarios/999/cuenta"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Usuario no autorizado")));
+    }
+
+    @Test
+    public void leaveTeamEndpointRemovesUserAndRedireccionaCuenta() throws Exception {
+        whenLoggedUserIsPresent();
+        doNothing().when(equipoService).quitarUsuarioDeEquipo(1L, 10L);
+
+        this.mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/equipos/1/leave"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/usuarios/10/cuenta"));
+    }
+
     private void whenLoggedUserIsPresent() {
         org.mockito.Mockito.when(managerUserSession.usuarioLogeado()).thenReturn(10L);
     }

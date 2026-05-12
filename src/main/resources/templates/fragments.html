@@ -58,7 +58,7 @@
                     Username
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarUserDropdown">
-                    <a class="dropdown-item" href="#">Account</a>
+                    <a class="dropdown-item" th:href="@{/usuarios/{id}/cuenta(id=${usuarioId})}">Account</a>
                     <a class="dropdown-item" th:href="@{/logout}">
                         Log out <span th:text="${usuarioNombre}"></span>
                     </a>
