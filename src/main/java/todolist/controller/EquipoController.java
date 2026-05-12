@@ -15,6 +15,8 @@ import java.util.List;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 public class EquipoController {
@@ -48,19 +50,28 @@ public class EquipoController {
         }
     }
 
+    private Set<Long> idsEquiposDelUsuario(Long idUsuarioLogeado) {
+        return equipoService.equiposUsuario(idUsuarioLogeado).stream()
+                .map(EquipoData::getId)
+                .collect(Collectors.toSet());
+    }
+
     @GetMapping("/equipos")
     public String listadoEquipos(Model model) {
         comprobarUsuarioLogeado();
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
         anadirDatosNavbar(model);
 
         List<EquipoData> equipos = equipoService.findAllOrdenadoPorNombre();
         model.addAttribute("equipos", equipos);
+        model.addAttribute("usuarioPerteneceAlEquipoIds", idsEquiposDelUsuario(idUsuarioLogeado));
         return "listaEquipos";
     }
 
     @GetMapping("/equipos/{id}")
     public String descripcionEquipo(@org.springframework.web.bind.annotation.PathVariable Long id, Model model) {
         comprobarUsuarioLogeado();
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
         anadirDatosNavbar(model);
 
         EquipoData equipo = equipoService.recuperarEquipo(id);
@@ -68,8 +79,25 @@ public class EquipoController {
 
         java.util.List<UsuarioData> usuarios = equipoService.usuariosEquipo(id);
         model.addAttribute("usuarios", usuarios);
+        model.addAttribute("usuarioEsMiembro", idsEquiposDelUsuario(idUsuarioLogeado).contains(id));
 
         return "descripcionEquipo";
+    }
+
+    @PostMapping("/equipos/{id}/join")
+    public String joinTeam(@PathVariable Long id, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        try {
+            equipoService.añadirUsuarioAEquipo(id, idUsuarioLogeado);
+            flash.addFlashAttribute("mensaje", "Te has unido al equipo correctamente");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos";
     }
 
     @GetMapping("/equipos/nuevo")
@@ -152,5 +180,37 @@ public class EquipoController {
             flash.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/usuarios/" + idUsuarioLogeado + "/cuenta";
+    }
+
+    @PostMapping("/equipos/{id}/leaveFromList")
+    public String leaveTeamFromList(@PathVariable Long id, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        try {
+            equipoService.quitarUsuarioDeEquipo(id, idUsuarioLogeado);
+            flash.addFlashAttribute("mensaje", "Has salido del equipo");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos";
+    }
+
+    @PostMapping("/equipos/{id}/leaveFromDescription")
+    public String leaveTeamFromDescription(@PathVariable Long id, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        try {
+            equipoService.quitarUsuarioDeEquipo(id, idUsuarioLogeado);
+            flash.addFlashAttribute("mensaje", "Has salido del equipo");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos/" + id;
     }
 }

@@ -11,6 +11,8 @@
     <div class="col">
       <h2>Teams</h2>
       <a class="btn btn-primary btn-sm" th:href="@{/equipos/nuevo}">New Team</a>
+      <div class="alert alert-success mt-2" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+      <div class="alert alert-danger mt-2" th:if="${error != null}" th:text="${error}"></div>
     </div>
   </div>
 
@@ -21,6 +23,7 @@
         <tr>
           <th>Id</th>
           <th>Name</th>
+          <th>Action</th>
         </tr>
         </thead>
         <tbody>
@@ -28,6 +31,18 @@
           <td th:text="${equipo.id}"></td>
           <td>
             <a th:href="@{/equipos/{id}(id=${equipo.id})}" th:text="${equipo.nombre}"></a>
+          </td>
+          <td>
+            <form method="post"
+                  th:if="${!usuarioPerteneceAlEquipoIds.contains(equipo.id)}"
+                  th:action="@{/equipos/{id}/join(id=${equipo.id})}">
+              <button type="submit" class="btn btn-primary btn-sm">Join</button>
+            </form>
+            <form method="post"
+                  th:if="${usuarioPerteneceAlEquipoIds.contains(equipo.id)}"
+                  th:action="@{/equipos/{id}/leaveFromList(id=${equipo.id})}">
+              <button type="submit" class="btn btn-outline-danger btn-sm">Leave</button>
+            </form>
           </td>
         </tr>
         </tbody>
