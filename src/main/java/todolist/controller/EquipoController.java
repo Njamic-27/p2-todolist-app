@@ -54,4 +54,18 @@ public class EquipoController {
         model.addAttribute("equipos", equipos);
         return "listaEquipos";
     }
+
+    @GetMapping("/equipos/{id}")
+    public String descripcionEquipo(@org.springframework.web.bind.annotation.PathVariable Long id, Model model) {
+        comprobarUsuarioLogeado();
+        anadirDatosNavbar(model);
+
+        EquipoData equipo = equipoService.recuperarEquipo(id);
+        model.addAttribute("equipo", equipo);
+
+        java.util.List<UsuarioData> usuarios = equipoService.usuariosEquipo(id);
+        model.addAttribute("usuarios", usuarios);
+
+        return "descripcionEquipo";
+    }
 }

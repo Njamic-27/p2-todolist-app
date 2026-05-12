@@ -78,6 +78,47 @@ public class EquipoWebTest {
                 .andExpect(status().reason(containsString("Usuario no autorizado")));
     }
 
+    @Test
+    public void descripcionEquipoMuestraEquipoYMiembros() throws Exception {
+        // GIVEN
+        whenLoggedUserIsPresent();
+
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(10L);
+        usuario.setNombre("Ana García");
+        usuario.setEmail("ana@umh.es");
+        org.mockito.Mockito.when(usuarioService.findById(10L)).thenReturn(usuario);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        UsuarioData miembro = new UsuarioData();
+        miembro.setId(2L);
+        miembro.setEmail("member@umh.es");
+
+        org.mockito.Mockito.when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        org.mockito.Mockito.when(equipoService.usuariosEquipo(1L)).thenReturn(java.util.Arrays.asList(miembro));
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Backend")))
+                .andExpect(content().string(containsString("member@umh.es")))
+                .andExpect(content().string(containsString("ToDoList")));
+    }
+
+    @Test
+    public void descripcionEquipoDevuelve401SiNoHayUsuarioLogeado() throws Exception {
+        // GIVEN
+        org.mockito.Mockito.when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        // WHEN, THEN
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Usuario no autorizado")));
+    }
+
     private void whenLoggedUserIsPresent() {
         org.mockito.Mockito.when(managerUserSession.usuarioLogeado()).thenReturn(10L);
     }
