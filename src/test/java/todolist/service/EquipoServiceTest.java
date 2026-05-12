@@ -33,6 +33,17 @@ public class EquipoServiceTest {
     }
 
     @Test
+    public void renombrarEquipo() {
+        EquipoData equipo = equipoService.crearEquipo("Proyecto 1");
+
+        EquipoData equipoRenombrado = equipoService.renombrarEquipo(equipo.getId(), "Proyecto 2");
+
+        assertThat(equipoRenombrado.getId()).isEqualTo(equipo.getId());
+        assertThat(equipoRenombrado.getNombre()).isEqualTo("Proyecto 2");
+        assertThat(equipoService.recuperarEquipo(equipo.getId()).getNombre()).isEqualTo("Proyecto 2");
+    }
+
+    @Test
     public void listadoEquiposOrdenAlfabetico() {
         // GIVEN
         // Dos equipos en la base de datos

@@ -81,6 +81,24 @@ public class EquipoService {
     }
 
     @Transactional
+    public EquipoData renombrarEquipo(Long idEquipo, String nuevoNombre) {
+        if (nuevoNombre == null || nuevoNombre.trim().isEmpty())
+            throw new EquipoServiceException("El equipo no tiene nombre");
+
+        Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
+        if (equipo == null)
+            throw new EquipoServiceException("El equipo no existe");
+
+        Optional<Equipo> equipoBD = equipoRepository.findByNombre(nuevoNombre);
+        if (equipoBD.isPresent() && !equipoBD.get().getId().equals(idEquipo))
+            throw new EquipoServiceException("El equipo " + nuevoNombre + " ya está registrado");
+
+        equipo.setNombre(nuevoNombre);
+        equipo = equipoRepository.save(equipo);
+        return modelMapper.map(equipo, EquipoData.class);
+    }
+
+    @Transactional
     public EquipoData recuperarEquipo(Long id) {
         Equipo equipo = equipoRepository.findById(id).orElse(null);
         if (equipo == null)
