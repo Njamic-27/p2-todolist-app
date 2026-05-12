@@ -2,6 +2,8 @@ FROM openjdk:21-ea-1-jdk
 COPY target/*.jar app.jar
 
 
+EXPOSE 8080
+
 # Añadida la opción java.security.egd para evitar que el servidor se cuelgue en Digitalocean
 # al hacer una petición que usa el HttpSession.
 # El problema está relacionado con el acceso al fichero /dev/random para inicializar el generador de números aleatorios
