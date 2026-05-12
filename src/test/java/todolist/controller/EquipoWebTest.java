@@ -12,6 +12,7 @@ import todolist.dto.UsuarioData;
 import todolist.service.EquipoService;
 import todolist.service.UsuarioService;
 
+
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -319,6 +320,22 @@ public class EquipoWebTest {
         this.mockMvc.perform(post("/equipos/1/join"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(status().reason(containsString("Usuario no autorizado")));
+    }
+
+    @Test
+    public void renombrarEquipoAdminSuccessfullyRenamesAndRedirects() throws Exception {
+        whenLoggedUserIsPresent();
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        EquipoData equipoRenombrado = new EquipoData();
+        equipoRenombrado.setId(1L);
+        equipoRenombrado.setNombre("Backend Updated");
+        when(equipoService.renombrarEquipo(1L, "Backend Updated")).thenReturn(equipoRenombrado);
+
+        this.mockMvc.perform(post("/equipos/1/renombrar")
+                        .param("nuevoNombre", "Backend Updated"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"));
     }
 
     private void whenLoggedUserIsPresent() {

@@ -213,4 +213,26 @@ public class EquipoController {
         }
         return "redirect:/equipos/" + id;
     }
+
+    @PostMapping("/equipos/{id}/renombrar")
+    public String renombrarEquipo(@PathVariable Long id, String nuevoNombre, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        if (!usuarioService.esAdministrador(idUsuarioLogeado)) {
+            flash.addFlashAttribute("error", "Permisos insuficientes");
+            return "redirect:/equipos";
+        }
+
+        try {
+            equipoService.renombrarEquipo(id, nuevoNombre);
+            flash.addFlashAttribute("mensaje", "Equipo renombrado correctamente");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/equipos";
+    }
 }
