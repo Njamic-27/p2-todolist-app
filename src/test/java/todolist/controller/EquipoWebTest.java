@@ -13,9 +13,12 @@ import todolist.service.EquipoService;
 import todolist.service.UsuarioService;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -59,6 +62,8 @@ public class EquipoWebTest {
 
         org.mockito.Mockito.when(equipoService.findAllOrdenadoPorNombre())
                 .thenReturn(Arrays.asList(equipo1, equipo2));
+        org.mockito.Mockito.when(equipoService.equiposUsuario(10L))
+                .thenReturn(Collections.emptyList());
 
         // WHEN, THEN
         this.mockMvc.perform(get("/equipos"))
@@ -68,6 +73,50 @@ public class EquipoWebTest {
                 .andExpect(content().string(containsString("Frontend")))
                 .andExpect(content().string(containsString("ToDoList")))
                 .andExpect(content().string(containsString("Tasks")));
+    }
+
+    @Test
+    public void listadoEquiposMuestraJoinYNoLeaveCuandoUsuarioNoEsMiembro() throws Exception {
+        whenLoggedUserIsPresent();
+
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(10L);
+        usuario.setNombre("Ana García");
+        when(usuarioService.findById(10L)).thenReturn(usuario);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        when(equipoService.findAllOrdenadoPorNombre()).thenReturn(Collections.singletonList(equipo));
+        when(equipoService.equiposUsuario(10L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/equipos/1/join")))
+                .andExpect(content().string(not(containsString("/equipos/1/leaveFromList"))));
+    }
+
+    @Test
+    public void listadoEquiposMuestraLeaveYNoJoinCuandoUsuarioEsMiembro() throws Exception {
+        whenLoggedUserIsPresent();
+
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(10L);
+        usuario.setNombre("Ana García");
+        when(usuarioService.findById(10L)).thenReturn(usuario);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        when(equipoService.findAllOrdenadoPorNombre()).thenReturn(Collections.singletonList(equipo));
+        when(equipoService.equiposUsuario(10L)).thenReturn(Collections.singletonList(equipo));
+
+        this.mockMvc.perform(get("/equipos"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/equipos/1/leaveFromList")))
+                .andExpect(content().string(not(containsString("/equipos/1/join"))));
     }
 
     @Test
@@ -102,6 +151,7 @@ public class EquipoWebTest {
 
         org.mockito.Mockito.when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
         org.mockito.Mockito.when(equipoService.usuariosEquipo(1L)).thenReturn(java.util.Arrays.asList(miembro));
+        org.mockito.Mockito.when(equipoService.equiposUsuario(10L)).thenReturn(Collections.emptyList());
 
         // WHEN, THEN
         this.mockMvc.perform(get("/equipos/1"))
@@ -109,6 +159,52 @@ public class EquipoWebTest {
                 .andExpect(content().string(containsString("Backend")))
                 .andExpect(content().string(containsString("member@umh.es")))
                 .andExpect(content().string(containsString("ToDoList")));
+    }
+
+    @Test
+    public void descripcionEquipoMuestraBotonJoinSiUsuarioNoPertenece() throws Exception {
+        whenLoggedUserIsPresent();
+
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(10L);
+        usuario.setNombre("Ana García");
+        when(usuarioService.findById(10L)).thenReturn(usuario);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+        when(equipoService.equiposUsuario(10L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/equipos/1/join")))
+                .andExpect(content().string(not(containsString("/equipos/1/leaveFromDescription"))));
+    }
+
+    @Test
+    public void descripcionEquipoMuestraBotonLeaveSiUsuarioPertenece() throws Exception {
+        whenLoggedUserIsPresent();
+
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(10L);
+        usuario.setNombre("Ana García");
+        when(usuarioService.findById(10L)).thenReturn(usuario);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+        when(equipoService.equiposUsuario(10L)).thenReturn(Collections.singletonList(equipo));
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/equipos/1/leaveFromDescription")))
+                .andExpect(content().string(not(containsString("/equipos/1/join"))));
     }
 
     @Test
@@ -204,6 +300,25 @@ public class EquipoWebTest {
         this.mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/equipos/1/leave"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/usuarios/10/cuenta"));
+    }
+
+    @Test
+    public void joinTeamEndpointAnadeUsuarioYRedirigeAEquipos() throws Exception {
+        whenLoggedUserIsPresent();
+        doNothing().when(equipoService).añadirUsuarioAEquipo(1L, 10L);
+
+        this.mockMvc.perform(post("/equipos/1/join"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"));
+    }
+
+    @Test
+    public void joinTeamEndpointDevuelve401SinUsuarioLogeado() throws Exception {
+        org.mockito.Mockito.when(managerUserSession.usuarioLogeado()).thenReturn(null);
+
+        this.mockMvc.perform(post("/equipos/1/join"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(status().reason(containsString("Usuario no autorizado")));
     }
 
     private void whenLoggedUserIsPresent() {
