@@ -32,11 +32,12 @@ public class EquipoService {
     // El nombre no debe estar registrado en la base de datos
     @Transactional
     public EquipoData registrar(EquipoData equipo) {
+        if (equipo.getNombre() == null || equipo.getNombre().trim().isEmpty())
+            throw new EquipoServiceException("El equipo no tiene nombre");
+
         Optional<Equipo> equipoBD = equipoRepository.findByNombre(equipo.getNombre());
         if (equipoBD.isPresent())
             throw new EquipoServiceException("El equipo " + equipo.getNombre() + " ya está registrado");
-        else if (equipo.getNombre() == null)
-            throw new EquipoServiceException("El equipo no tiene nombre");
         else {
             Equipo equipoNuevo = modelMapper.map(equipo, Equipo.class);
             equipoNuevo = equipoRepository.save(equipoNuevo);
@@ -64,11 +65,12 @@ public class EquipoService {
 
     @Transactional
     public EquipoData crearEquipo(String nombre) {
+        if (nombre == null || nombre.trim().isEmpty())
+            throw new EquipoServiceException("El equipo no tiene nombre");
+
         Optional<Equipo> equipoBD = equipoRepository.findByNombre(nombre);
         if (equipoBD.isPresent())
             throw new EquipoServiceException("El equipo " + nombre + " ya está registrado");
-        else if (nombre == null)
-            throw new EquipoServiceException("El equipo no tiene nombre");
         else {
             Equipo equipoNuevo = modelMapper.map(new Equipo(), Equipo.class);
             equipoNuevo.setNombre(nombre);
@@ -116,7 +118,7 @@ public class EquipoService {
         if (equipo.getUsuarios().contains(usuario))
             throw new EquipoServiceException("El usuario ya pertenece al equipo");
 
-        // añadimos el usuario al equipo
+        // añadimos el usuario al equipo usando el método helper
         equipo.addUsuario(usuario);
         // guardamos el equipo
         equipoRepository.save(equipo);
@@ -150,8 +152,8 @@ public class EquipoService {
         if (!equipo.getUsuarios().contains(usuario))
             throw new EquipoServiceException("El usuario no pertenece al equipo");
 
-        equipo.getUsuarios().remove(usuario);
-        usuario.getEquipos().remove(equipo);
+        // Removemos el usuario del equipo usando el método helper
+        equipo.removeUsuario(usuario);
 
         equipoRepository.save(equipo);
         usuarioRepository.save(usuario);

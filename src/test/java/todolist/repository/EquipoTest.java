@@ -125,4 +125,37 @@ public class EquipoTest {
         assertThat(equipos).hasSize(2);
     }
 
+    @Test
+    @Transactional
+    public void removerUsuarioDelEquipo() {
+        // GIVEN
+        // Un equipo y un usuario en la BD
+        Equipo equipo = new Equipo("Project 1");
+        equipoRepository.save(equipo);
+
+        Usuario usuario = new Usuario("user@umh");
+        usuarioRepository.save(usuario);
+
+        // WHEN
+        // Añadimos el usuario al equipo
+        equipo.addUsuario(usuario);
+
+        // THEN
+        // La relación entre usuario y equipo queda actualizada en BD
+        assertThat(equipo.getUsuarios()).hasSize(1);
+        assertThat(usuario.getEquipos()).hasSize(1);
+
+        // WHEN
+        // Removemos el usuario del equipo
+        equipo.removeUsuario(usuario);
+
+        // THEN
+        // La relación se ha eliminado
+        Equipo equipoBD = equipoRepository.findById(equipo.getId()).orElse(null);
+        Usuario usuarioBD = usuarioRepository.findById(usuario.getId()).orElse(null);
+
+        assertThat(equipoBD.getUsuarios()).hasSize(0);
+        assertThat(usuarioBD.getEquipos()).hasSize(0);
+    }
+
 }

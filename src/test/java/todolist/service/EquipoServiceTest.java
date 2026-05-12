@@ -114,4 +114,151 @@ public class EquipoServiceTest {
                 .isInstanceOf(EquipoServiceException.class);
     }
 
+    @Test
+    public void quitarUsuarioDeEquipo() {
+        // GIVEN
+        // Un usuario y un equipo en la base de datos
+        UsuarioData usuarioData = new UsuarioData();
+        usuarioData.setEmail("user@umh");
+        usuarioData.setPassword("1234");
+        UsuarioData usuarioRegistrado = usuarioService.registrar(usuarioData);
+        EquipoData equipoCreado = equipoService.crearEquipo("Proyecto 1");
+
+        // WHEN
+        // Añadimos el usuario al equipo
+        equipoService.añadirUsuarioAEquipo(equipoCreado.getId(), usuarioRegistrado.getId());
+
+        // THEN
+        // El usuario pertenece al equipo
+        List<UsuarioData> usuariosDelEquipo = equipoService.usuariosEquipo(equipoCreado.getId());
+        assertThat(usuariosDelEquipo).hasSize(1);
+        assertThat(usuariosDelEquipo.get(0).getEmail()).isEqualTo("user@umh");
+
+        // WHEN
+        // Quitamos el usuario del equipo
+        equipoService.quitarUsuarioDeEquipo(equipoCreado.getId(), usuarioRegistrado.getId());
+
+        // THEN
+        // El usuario ya no pertenece al equipo
+        List<UsuarioData> usuariosAfterRemove = equipoService.usuariosEquipo(equipoCreado.getId());
+        assertThat(usuariosAfterRemove).hasSize(0);
+    }
+
+    @Test
+    public void quitarUsuarioDeEquipoActualizaBidireccional() {
+        // GIVEN
+        // Un usuario en dos equipos
+        UsuarioData usuarioData = new UsuarioData();
+        usuarioData.setEmail("user@umh");
+        usuarioData.setPassword("1234");
+        UsuarioData usuarioRegistrado = usuarioService.registrar(usuarioData);
+        EquipoData equipoCreado1 = equipoService.crearEquipo("Proyecto 1");
+        EquipoData equipoCreado2 = equipoService.crearEquipo("Proyecto 2");
+
+        // WHEN
+        // Añadimos el usuario a ambos equipos
+        equipoService.añadirUsuarioAEquipo(equipoCreado1.getId(), usuarioRegistrado.getId());
+        equipoService.añadirUsuarioAEquipo(equipoCreado2.getId(), usuarioRegistrado.getId());
+
+        // THEN
+        // El usuario pertenece a ambos equipos
+        List<EquipoData> equiposDelUsuario = equipoService.equiposUsuario(usuarioRegistrado.getId());
+        assertThat(equiposDelUsuario).hasSize(2);
+
+        // WHEN
+        // Quitamos el usuario de un equipo
+        equipoService.quitarUsuarioDeEquipo(equipoCreado1.getId(), usuarioRegistrado.getId());
+
+        // THEN
+        // El usuario solo pertenece a un equipo (se mantiene la relación bidireccional)
+        List<EquipoData> equiposAfterRemove = equipoService.equiposUsuario(usuarioRegistrado.getId());
+        assertThat(equiposAfterRemove).hasSize(1);
+        assertThat(equiposAfterRemove.get(0).getNombre()).isEqualTo("Proyecto 2");
+    }
+
+    @Test
+    public void quitarUsuarioDeEquipoExcepcionEquipoNoExiste() {
+        // GIVEN
+        // Un usuario en la base de datos
+        UsuarioData usuarioData = new UsuarioData();
+        usuarioData.setEmail("user@umh");
+        usuarioData.setPassword("1234");
+        UsuarioData usuarioRegistrado = usuarioService.registrar(usuarioData);
+
+        // THEN
+        // Intentamos quitar el usuario de un equipo que no existe
+        assertThatThrownBy(() -> equipoService.quitarUsuarioDeEquipo(1L, usuarioRegistrado.getId()))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El equipo no existe");
+    }
+
+    @Test
+    public void quitarUsuarioDeEquipoExcepcionUsuarioNoExiste() {
+        // GIVEN
+        // Un equipo en la base de datos
+        EquipoData equipoCreado = equipoService.crearEquipo("Proyecto 1");
+
+        // THEN
+        // Intentamos quitar un usuario que no existe del equipo
+        assertThatThrownBy(() -> equipoService.quitarUsuarioDeEquipo(equipoCreado.getId(), 1L))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El usuario no existe");
+    }
+
+    @Test
+    public void quitarUsuarioDeEquipoExcepcionUsuarioNoPertenece() {
+        // GIVEN
+        // Un usuario y un equipo en la base de datos, pero el usuario no está en el equipo
+        UsuarioData usuarioData = new UsuarioData();
+        usuarioData.setEmail("user@umh");
+        usuarioData.setPassword("1234");
+        UsuarioData usuarioRegistrado = usuarioService.registrar(usuarioData);
+        EquipoData equipoCreado = equipoService.crearEquipo("Proyecto 1");
+
+        // THEN
+        // Intentamos quitar el usuario del equipo cuando no pertenece
+        assertThatThrownBy(() -> equipoService.quitarUsuarioDeEquipo(equipoCreado.getId(), usuarioRegistrado.getId()))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El usuario no pertenece al equipo");
+    }
+
+    @Test
+    public void crearEquipoConNombreVacio() {
+        // THEN
+        // Intentamos crear un equipo con nombre vacío
+        String nombreVacio = "";
+        assertThatThrownBy(() -> equipoService.crearEquipo(nombreVacio))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El equipo no tiene nombre");
+    }
+
+    @Test
+    public void crearEquipoConNombreNull() {
+        // THEN
+        // Intentamos crear un equipo con nombre null
+        assertThatThrownBy(() -> equipoService.crearEquipo(null))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El equipo no tiene nombre");
+    }
+
+    @Test
+    public void añadirUsuarioAEquipoYaExistente() {
+        // GIVEN
+        // Un usuario en un equipo
+        UsuarioData usuarioData = new UsuarioData();
+        usuarioData.setEmail("user@umh");
+        usuarioData.setPassword("1234");
+        UsuarioData usuarioRegistrado = usuarioService.registrar(usuarioData);
+        EquipoData equipoCreado = equipoService.crearEquipo("Proyecto 1");
+        equipoService.añadirUsuarioAEquipo(equipoCreado.getId(), usuarioRegistrado.getId());
+
+        // THEN
+        // Intentamos añadir el usuario al equipo nuevamente
+        Long equipoId = equipoCreado.getId();
+        Long usuarioId = usuarioRegistrado.getId();
+        assertThatThrownBy(() -> equipoService.añadirUsuarioAEquipo(equipoId, usuarioId))
+                .isInstanceOf(EquipoServiceException.class)
+                .hasMessage("El usuario ya pertenece al equipo");
+    }
+
 }
