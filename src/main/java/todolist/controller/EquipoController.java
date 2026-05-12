@@ -12,6 +12,9 @@ import todolist.service.EquipoService;
 import todolist.service.UsuarioService;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class EquipoController {
@@ -67,5 +70,54 @@ public class EquipoController {
         model.addAttribute("usuarios", usuarios);
 
         return "descripcionEquipo";
+    }
+
+    @GetMapping("/equipos/nuevo")
+    public String formNuevoEquipo(Model model) {
+        comprobarUsuarioLogeado();
+        anadirDatosNavbar(model);
+        return "formNuevoEquipo";
+    }
+
+    @PostMapping("/equipos/nuevo")
+    public String crearEquipo(String nombre, RedirectAttributes flash) {
+        comprobarUsuarioLogeado();
+        try {
+            equipoService.crearEquipo(nombre);
+            flash.addFlashAttribute("mensaje", "Equipo creado correctamente");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+            return "redirect:/equipos/nuevo";
+        }
+        return "redirect:/equipos";
+    }
+
+    @PostMapping("/equipos/{id}/addUser")
+    public String addUserToTeam(@PathVariable Long id, String email, RedirectAttributes flash) {
+        comprobarUsuarioLogeado();
+        try {
+            UsuarioData usuario = usuarioService.findByEmail(email);
+            if (usuario == null) {
+                flash.addFlashAttribute("error", "Usuario no encontrado");
+            } else {
+                equipoService.añadirUsuarioAEquipo(id, usuario.getId());
+                flash.addFlashAttribute("mensaje", "Usuario añadido al equipo");
+            }
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos/" + id;
+    }
+
+    @PostMapping("/equipos/{id}/removeUser")
+    public String removeUserFromTeam(@PathVariable Long id, Long userId, RedirectAttributes flash) {
+        comprobarUsuarioLogeado();
+        try {
+            equipoService.quitarUsuarioDeEquipo(id, userId);
+            flash.addFlashAttribute("mensaje", "Usuario eliminado del equipo");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/equipos/" + id;
     }
 }

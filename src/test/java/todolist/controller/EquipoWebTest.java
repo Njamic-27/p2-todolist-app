@@ -18,6 +18,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -117,6 +120,46 @@ public class EquipoWebTest {
         this.mockMvc.perform(get("/equipos/1"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(status().reason(containsString("Usuario no autorizado")));
+    }
+
+    @Test
+    public void crearEquipoPostCreaEquipoYRedirige() throws Exception {
+        whenLoggedUserIsPresent();
+        EquipoData nuevo = new EquipoData();
+        nuevo.setId(5L);
+        nuevo.setNombre("Infra");
+        when(equipoService.crearEquipo("Infra")).thenReturn(nuevo);
+
+        this.mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/equipos/nuevo")
+                        .param("nombre", "Infra"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"));
+    }
+
+    @Test
+    public void addUserEndpointAddsUserAndRedirects() throws Exception {
+        whenLoggedUserIsPresent();
+        UsuarioData usuario = new UsuarioData();
+        usuario.setId(2L);
+        usuario.setEmail("member@umh.es");
+        when(usuarioService.findByEmail("member@umh.es")).thenReturn(usuario);
+        doNothing().when(equipoService).añadirUsuarioAEquipo(1L, 2L);
+
+        this.mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/equipos/1/addUser")
+                        .param("email", "member@umh.es"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos/1"));
+    }
+
+    @Test
+    public void removeUserEndpointRemovesUserAndRedirects() throws Exception {
+        whenLoggedUserIsPresent();
+        doNothing().when(equipoService).quitarUsuarioDeEquipo(1L, 2L);
+
+        this.mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/equipos/1/removeUser")
+                        .param("userId", "2"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos/1"));
     }
 
     private void whenLoggedUserIsPresent() {

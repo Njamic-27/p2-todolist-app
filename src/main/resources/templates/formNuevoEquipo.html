@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="fragments :: head (titulo='New team')"></head>
+
+<body>
+<div th:replace="fragments :: userNavbar(${usuarioId}, ${usuarioNombre})"></div>
+
+<div class="container-fluid">
+  <div class="row mt-3">
+    <div class="col">
+      <h2>Create new team</h2>
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col">
+      <div class="alert alert-success" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+      <div class="alert alert-danger" th:if="${error != null}" th:text="${error}"></div>
+
+      <form method="post" th:action="@{/equipos/nuevo}">
+        <div class="form-group">
+          <label for="nombre">Team name</label>
+          <input id="nombre" name="nombre" class="form-control" required />
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div th:replace="fragments::javascript"></div>
+</body>
+</html>
+

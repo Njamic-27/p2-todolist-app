@@ -140,6 +140,24 @@ public class EquipoService {
     }
 
     @Transactional
+    public void quitarUsuarioDeEquipo(Long idEquipo, Long idUsuario) {
+        Equipo equipo = equipoRepository.findById(idEquipo).orElse(null);
+        if (equipo == null) throw new EquipoServiceException("El equipo no existe");
+
+        Usuario usuario = usuarioRepository.findById(idUsuario).orElse(null);
+        if (usuario == null) throw new EquipoServiceException("El usuario no existe");
+
+        if (!equipo.getUsuarios().contains(usuario))
+            throw new EquipoServiceException("El usuario no pertenece al equipo");
+
+        equipo.getUsuarios().remove(usuario);
+        usuario.getEquipos().remove(equipo);
+
+        equipoRepository.save(equipo);
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
     public List<EquipoData> equiposUsuario(long idUsuario) {
         Usuario usuario = usuarioRepository.findById(idUsuario).orElse(null);
         if (usuario == null)
