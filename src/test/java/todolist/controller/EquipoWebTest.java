@@ -12,6 +12,7 @@ import todolist.dto.UsuarioData;
 import todolist.service.EquipoService;
 import todolist.service.UsuarioService;
 
+
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -219,6 +220,44 @@ public class EquipoWebTest {
     }
 
     @Test
+    public void descripcionEquipoMuestraControlesAdminCuandoUsuarioEsAdministrador() throws Exception {
+        whenLoggedUserIsPresent();
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+        when(equipoService.equiposUsuario(10L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("/equipos/1/renombrar")))
+                .andExpect(content().string(containsString("/equipos/1/eliminar")));
+    }
+
+    @Test
+    public void descripcionEquipoNoMuestraControlesAdminParaUsuarioNoAdministrador() throws Exception {
+        whenLoggedUserIsPresent();
+        when(usuarioService.esAdministrador(10L)).thenReturn(false);
+
+        EquipoData equipo = new EquipoData();
+        equipo.setId(1L);
+        equipo.setNombre("Backend");
+
+        when(equipoService.recuperarEquipo(1L)).thenReturn(equipo);
+        when(equipoService.usuariosEquipo(1L)).thenReturn(Collections.emptyList());
+        when(equipoService.equiposUsuario(10L)).thenReturn(Collections.emptyList());
+
+        this.mockMvc.perform(get("/equipos/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("/equipos/1/renombrar"))))
+                .andExpect(content().string(not(containsString("/equipos/1/eliminar"))));
+    }
+
+    @Test
     public void crearEquipoPostCreaEquipoYRedirige() throws Exception {
         whenLoggedUserIsPresent();
         EquipoData nuevo = new EquipoData();
@@ -319,6 +358,34 @@ public class EquipoWebTest {
         this.mockMvc.perform(post("/equipos/1/join"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(status().reason(containsString("Usuario no autorizado")));
+    }
+
+    @Test
+    public void renombrarEquipoAdminSuccessfullyRenamesAndRedirects() throws Exception {
+        whenLoggedUserIsPresent();
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        EquipoData equipoRenombrado = new EquipoData();
+        equipoRenombrado.setId(1L);
+        equipoRenombrado.setNombre("Backend Updated");
+        when(equipoService.renombrarEquipo(1L, "Backend Updated")).thenReturn(equipoRenombrado);
+
+        this.mockMvc.perform(post("/equipos/1/renombrar")
+                        .param("nuevoNombre", "Backend Updated"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"));
+    }
+
+    @Test
+    public void eliminarEquipoAdminSuccessfullyDeletesAndRedirects() throws Exception {
+        whenLoggedUserIsPresent();
+        when(usuarioService.esAdministrador(10L)).thenReturn(true);
+
+        doNothing().when(equipoService).eliminarEquipo(1L);
+
+        this.mockMvc.perform(post("/equipos/1/eliminar"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"));
     }
 
     private void whenLoggedUserIsPresent() {

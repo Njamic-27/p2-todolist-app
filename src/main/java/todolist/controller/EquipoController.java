@@ -80,6 +80,9 @@ public class EquipoController {
         java.util.List<UsuarioData> usuarios = equipoService.usuariosEquipo(id);
         model.addAttribute("usuarios", usuarios);
         model.addAttribute("usuarioEsMiembro", idsEquiposDelUsuario(idUsuarioLogeado).contains(id));
+        // expose whether the logged user is admin so templates can show admin-only controls
+        boolean esAdmin = usuarioService.esAdministrador(idUsuarioLogeado);
+        model.addAttribute("usuarioEsAdmin", esAdmin);
 
         return "descripcionEquipo";
     }
@@ -212,5 +215,49 @@ public class EquipoController {
             flash.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/equipos/" + id;
+    }
+
+    @PostMapping("/equipos/{id}/renombrar")
+    public String renombrarEquipo(@PathVariable Long id, String nuevoNombre, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        if (!usuarioService.esAdministrador(idUsuarioLogeado)) {
+            flash.addFlashAttribute("error", "Permisos insuficientes");
+            return "redirect:/equipos";
+        }
+
+        try {
+            equipoService.renombrarEquipo(id, nuevoNombre);
+            flash.addFlashAttribute("mensaje", "Equipo renombrado correctamente");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/equipos";
+    }
+
+    @PostMapping("/equipos/{id}/eliminar")
+    public String eliminarEquipo(@PathVariable Long id, RedirectAttributes flash) {
+        Long idUsuarioLogeado = managerUserSession.usuarioLogeado();
+        if (idUsuarioLogeado == null) {
+            throw new UsuarioNoLogeadoException();
+        }
+
+        if (!usuarioService.esAdministrador(idUsuarioLogeado)) {
+            flash.addFlashAttribute("error", "Permisos insuficientes");
+            return "redirect:/equipos";
+        }
+
+        try {
+            equipoService.eliminarEquipo(id);
+            flash.addFlashAttribute("mensaje", "Equipo eliminado correctamente");
+        } catch (Exception e) {
+            flash.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/equipos";
     }
 }
