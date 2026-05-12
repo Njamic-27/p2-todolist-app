@@ -38,6 +38,9 @@
     <div class="collapse navbar-collapse" id="userNavbarContent">
         <ul class="navbar-nav mr-auto">
             <li class="nav-item">
+                <a class="nav-link" th:href="@{/equipos}">Teams</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" th:href="@{/usuarios/{id}/tareas(id=${usuarioId})}">Tasks</a>
             </li>
         </ul>
@@ -55,7 +58,7 @@
                     Username
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarUserDropdown">
-                    <a class="dropdown-item" href="#">Account</a>
+                    <a class="dropdown-item" th:href="@{/usuarios/{id}/cuenta(id=${usuarioId})}">Account</a>
                     <a class="dropdown-item" th:href="@{/logout}">
                         Log out <span th:text="${usuarioNombre}"></span>
                     </a>

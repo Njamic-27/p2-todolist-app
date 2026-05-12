@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="fragments :: head (titulo='Team description')"></head>
+
+<body>
+<div th:replace="fragments :: userNavbar(${usuarioId}, ${usuarioNombre})"></div>
+
+<div class="container-fluid">
+  <div class="row mt-3">
+    <div class="col">
+      <h2 th:text="${equipo.nombre}">Team name</h2>
+    </div>
+  </div>
+
+  <div class="row mt-3">
+    <div class="col">
+      <h4>Members</h4>
+      <div class="alert alert-success" th:if="${mensaje != null}" th:text="${mensaje}"></div>
+      <div class="alert alert-danger" th:if="${error != null}" th:text="${error}"></div>
+
+      <form method="post" th:action="@{/equipos/{id}/addUser(id=${equipo.id})}" class="form-inline mb-3">
+        <div class="form-group mr-2">
+          <input class="form-control" type="email" name="email" placeholder="user email" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Add member</button>
+      </form>
+
+      <ul>
+        <li th:each="usuario : ${usuarios}">
+          <a th:href="@{/registered/{id}(id=${usuario.id})}" th:text="${usuario.email}"></a>
+          <form method="post" th:action="@{/equipos/{id}/removeUser(id=${equipo.id})}" class="d-inline ml-2">
+            <input type="hidden" name="userId" th:value="${usuario.id}" />
+            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div th:replace="fragments::javascript"></div>
+</body>
+</html>
+
