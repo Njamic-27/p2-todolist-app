@@ -4,7 +4,7 @@ ToDoList app using Spring Boot, Thymeleaf templates, Spring Data JPA, and H2 dat
 
 Project owner: **Nikola Jamic**.
 
-Developer-facing documentation for the v1.1.0 delivery of the Spring Boot ToDoList project.
+Developer-facing documentation for the v1.2.0 delivery of the Spring Boot ToDoList project.
 
 ## Repository and Delivery URLs
 
@@ -20,12 +20,45 @@ The following links point to the real published tags in DockerHub:
 | Tag | DockerHub link | Pull command |
 |---|---|---|
 | `latest` | https://hub.docker.com/r/njamic/p2-todolistapp/tags?name=latest | `docker pull njamic/p2-todolistapp:latest` |
+| `1.2.0` | https://hub.docker.com/r/njamic/p2-todolistapp/tags?name=1.2.0 | `docker pull njamic/p2-todolistapp:1.2.0` |
 | `1.1.0` | https://hub.docker.com/r/njamic/p2-todolistapp/tags?name=1.1.0 | `docker pull njamic/p2-todolistapp:1.1.0` |
 | `1.0.1` | https://hub.docker.com/r/njamic/p2-todolistapp/tags?name=1.0.1 | `docker pull njamic/p2-todolistapp:1.0.1` |
 
+## How to run the Docker container
+
+The image supports two runtime configurations. Both `1.2.0` and `latest` tags point to the same image.
+
+### Option A: Run with H2 in-memory database
+
+For quick testing and development:
+
+```powershell
+docker run --rm -p 8080:8080 njamic/p2-todolistapp:latest
+```
+
+### Option B: Run with PostgreSQL database
+
+For production or when you need persistent data storage:
+
+```powershell
+docker run --rm -p 8080:8080 `
+  -e SPRING_PROFILES_ACTIVE=postgres `
+  -e POSTGRES_HOST=host.docker.internal `
+  -e POSTGRES_PORT=5433 `
+  -e POSTGRES_USER=atsd `
+  -e POSTGRES_PASSWORD=atsd `
+  njamic/p2-todolistapp:latest
+```
+
+Then open `http://localhost:8080` in your browser.
+
 ## Technical Evolution Summary
 
-Version 1.1.0 extends the original task-management baseline with navigation standardization and administrator workflows. The objective was to implement mandatory requirements (shared menu bar, registered users list, and user description page) and optional requirements (single admin registration, admin-only protection for user listing/description, and admin block/unblock operations). Implementation touches all layers: Thymeleaf templates, controllers, service logic, repository queries, and automated tests.
+Version 1.2.0 extends the project with team-management features and a refreshed delivery state while preserving the previous published Docker tags. The objective of this release is to keep the app aligned with the completed stories and to document the current DockerHub images clearly.
+
+Previous releases remain available on DockerHub as `1.1.0` and `1.0.1`, while the new release is published as both `1.2.0` and `latest`.
+
+The earlier 1.1.0 baseline introduced navigation standardization and administrator workflows. That work implemented the mandatory requirements (shared menu bar, registered users list, and user description page) and optional requirements (single admin registration, admin-only protection for user listing/description, and admin block/unblock operations). Implementation touched all layers: Thymeleaf templates, controllers, service logic, repository queries, and automated tests.
 
 At the presentation layer, navbar behavior is centralized in `src/main/resources/templates/fragments.html` using `guestNavbar` and `userNavbar(usuarioId, usuarioNombre)`. This reduced duplication and made the About page dynamic: guests see login/register links, while logged-in users see ToDoList, Tasks, and account/logout options. The two new user-management views are `src/main/resources/templates/listaUsuarios.html` and `src/main/resources/templates/descripcionUsuario.html`. Both render the common user navbar and are focused on admin actions. `listaUsuarios.html` includes enable/disable actions and links to each user description; `descripcionUsuario.html` intentionally excludes passwords.
 
