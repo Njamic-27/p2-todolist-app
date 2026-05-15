@@ -1,4 +1,4 @@
-# ToDoList App - Technical Documentation (v1.1.0)
+# ToDoList App - Technical Documentation (v1.2.0)
 
 ToDoList app using Spring Boot, Thymeleaf templates, Spring Data JPA, and H2 database.
 
